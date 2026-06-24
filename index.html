@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>YouTube 2x Player</title>
+  <title>YouTube Player</title>
   <style>
     body {
       margin: 0;
@@ -73,22 +73,28 @@
 </head>
 <body>
   <main>
-    <h1>YouTube 2x Player</h1>
 
     <div class="player-wrap">
       <div id="player"></div>
     </div>
 
     <div class="controls">
-      <button type="button" id="speed2">2倍にする</button>
+      <button type="button" id="speedToggle">x2.0</button>
+      <button type="button" id="skipBack10">&lt;&lt;10</button>
+      <button type="button" id="skipForward10">&gt;&gt;10</button>
     </div>
 
     <div class="message" id="message"></div>
   </main>
 
   <script>
-    const DEFAULT_RATE = 2;
+    const NORMAL_RATE = 1;
+    const FAST_RATE = 2;
+    const INITIAL_SKIP_SECONDS = 90;
+    const SKIP_SECONDS = 10;
+
     let player = null;
+    let currentRate = NORMAL_RATE;
 
     function getParam(name) {
       return new URLSearchParams(window.location.search).get(name);
@@ -148,20 +154,64 @@
       document.getElementById("message").innerHTML = text;
     }
 
-    function setPlaybackRate2x() {
+    function isPlayerReady() {
+      return player && typeof player.getCurrentTime === "function";
+    }
+
+    function updateSpeedButton() {
+      const button = document.getElementById("speedToggle");
+      button.textContent = currentRate === FAST_RATE ? "x1.0" : "x2.0";
+    }
+
+    function setPlaybackRate(rate) {
       if (!player || typeof player.setPlaybackRate !== "function") return;
 
       const availableRates = player.getAvailablePlaybackRates
         ? player.getAvailablePlaybackRates()
         : [];
 
-      if (availableRates.length > 0 && !availableRates.includes(DEFAULT_RATE)) {
-        setMessage("この動画では2倍速が利用できない可能性があります");
+      if (availableRates.length > 0 && !availableRates.includes(rate)) {
+        setMessage("この動画では指定した再生速度が利用できない可能性があります");
         return;
       }
 
-      player.setPlaybackRate(DEFAULT_RATE);
-      setMessage("再生速度を <code>2倍</code> に設定しました");
+      player.setPlaybackRate(rate);
+      currentRate = rate;
+      updateSpeedButton();
+
+      setMessage("再生速度を <code>" + rate + "倍</code> に設定しました");
+    }
+
+    function seekBy(seconds) {
+      if (!isPlayerReady()) return;
+
+      const currentTime = player.getCurrentTime();
+      const duration = player.getDuration ? player.getDuration() : 0;
+
+      let nextTime = currentTime + seconds;
+
+      if (nextTime < 0) {
+        nextTime = 0;
+      }
+
+      if (duration && nextTime > duration) {
+        nextTime = duration;
+      }
+
+      player.seekTo(nextTime, true);
+    }
+
+    function toggleSpeedAndPlay() {
+      if (!isPlayerReady()) return;
+
+      if (currentRate === FAST_RATE) {
+        setPlaybackRate(NORMAL_RATE);
+        return;
+      }
+
+      player.playVideo();
+      seekBy(INITIAL_SKIP_SECONDS);
+      setPlaybackRate(FAST_RATE);
     }
 
     function onYouTubeIframeAPIReady() {
@@ -188,23 +238,26 @@
         },
         events: {
           onReady: function () {
-            setPlaybackRate2x();
-          },
-          onStateChange: function (event) {
-            if (event.data === YT.PlayerState.PLAYING) {
-              setPlaybackRate2x();
-            }
+            setPlaybackRate(NORMAL_RATE);
+            setMessage("プレイヤーの準備ができました");
           },
           onPlaybackRateChange: function (event) {
-            if (event.data !== DEFAULT_RATE) {
-              setPlaybackRate2x();
-            }
+            currentRate = event.data;
+            updateSpeedButton();
           }
         }
       });
     }
 
-    document.getElementById("speed2").addEventListener("click", setPlaybackRate2x);
+    document.getElementById("speedToggle").addEventListener("click", toggleSpeedAndPlay);
+
+    document.getElementById("skipBack10").addEventListener("click", function () {
+      seekBy(-SKIP_SECONDS);
+    });
+
+    document.getElementById("skipForward10").addEventListener("click", function () {
+      seekBy(SKIP_SECONDS);
+    });
 
     const tag = document.createElement("script");
     tag.src = "https://www.youtube.com/iframe_api";
