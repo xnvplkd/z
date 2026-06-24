@@ -78,7 +78,6 @@
     <div class="controls">
       <button type="button" id="muteToggle">Mute</button>
       <button type="button" id="speed2Toggle">x2.0</button>
-      <button type="button" id="speed34Toggle">x3.0</button>
       <button type="button" id="skipForward90">&gt;&gt;90</button>
       <button type="button" id="skipBack10">&lt;&lt;10</button>
       <button type="button" id="skipForward10">&gt;&gt;10</button>
@@ -91,8 +90,6 @@
   <script>
     const NORMAL_RATE = 1;
     const SPEED_2 = 2;
-    const SPEED_3 = 3;
-    const SPEED_4 = 4;
     const SKIP_10_SECONDS = 10;
     const SKIP_90_SECONDS = 90;
     const YOUTUBE_NOCOOKIE_HOST = "https://www.youtube-nocookie.com";
@@ -169,12 +166,9 @@
       button.textContent = isMuted ? "Unmute" : "Mute";
     }
 
-    function updateSpeedButtons() {
+    function updateSpeedButton() {
       const speed2Button = document.getElementById("speed2Toggle");
-      const speed34Button = document.getElementById("speed34Toggle");
-
       speed2Button.textContent = currentRate === SPEED_2 ? "x1.0" : "x2.0";
-      speed34Button.textContent = currentRate === SPEED_3 ? "x4.0" : "x3.0";
     }
 
     function updateInvertButton() {
@@ -219,7 +213,7 @@
 
       player.setPlaybackRate(rate);
       currentRate = rate;
-      updateSpeedButtons();
+      updateSpeedButton();
 
       setMessage("再生速度を <code>" + rate + "倍</code> に設定しました");
     }
@@ -235,19 +229,6 @@
       }
 
       setPlaybackRate(SPEED_2);
-    }
-
-    function toggleSpeed34() {
-      if (!isPlayerReady()) return;
-
-      player.playVideo();
-
-      if (currentRate === SPEED_3) {
-        setPlaybackRate(SPEED_4);
-        return;
-      }
-
-      setPlaybackRate(SPEED_3);
     }
 
     function seekBy(seconds) {
@@ -307,13 +288,13 @@
             setMuted(true);
             setPlaybackRate(NORMAL_RATE);
             updateMuteButton();
-            updateSpeedButtons();
+            updateSpeedButton();
             updateInvertButton();
             setMessage("プレイヤーの準備ができました");
           },
           onPlaybackRateChange: function (event) {
             currentRate = event.data;
-            updateSpeedButtons();
+            updateSpeedButton();
           }
         }
       });
@@ -322,8 +303,6 @@
     document.getElementById("muteToggle").addEventListener("click", toggleMute);
 
     document.getElementById("speed2Toggle").addEventListener("click", toggleSpeed2);
-
-    document.getElementById("speed34Toggle").addEventListener("click", toggleSpeed34);
 
     document.getElementById("skipForward90").addEventListener("click", function () {
       seekBy(SKIP_90_SECONDS);
@@ -340,7 +319,7 @@
     document.getElementById("invertToggle").addEventListener("click", toggleInvert);
 
     updateMuteButton();
-    updateSpeedButtons();
+    updateSpeedButton();
     updateInvertButton();
 
     const tag = document.createElement("script");
