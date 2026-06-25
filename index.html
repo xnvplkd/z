@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>YouTube Player</title>
+  <title>▶️</title>
   <style>
     body {
       margin: 0;
@@ -280,6 +280,8 @@
     const SKIP_10_SECONDS = 10;
     const SKIP_90_SECONDS = 90;
     const LOOP_GAP_SECONDS = 0.5;
+    const LOOP_PARAM_START = "loopStart";
+    const LOOP_PARAM_END = "loopEnd";
     const YOUTUBE_NOCOOKIE_HOST = "https://www.youtube-nocookie.com";
     const BOOKMARKLET_CODE = 'javascript:(()=>{const id=new URL(location.href).searchParams.get("v");if(!id){document.title="動画IDが見つかりません";return;}location.href="https://xnvplkd.github.io/z/?v="+encodeURIComponent(id);})();';
 
@@ -294,9 +296,18 @@
     let activeLoopHandle = null;
     let isDraggingSeek = false;
     let timeTimer = null;
+    let hasLoadedLoopFromUrl = false;
 
     function getParam(name) {
       return new URLSearchParams(window.location.search).get(name);
+    }
+
+    function getNumberParam(name) {
+      const value = getParam(name);
+      if (value === null || value === "") return null;
+
+      const number = Number(value);
+      return Number.isFinite(number) ? number : null;
     }
 
     function extractYouTubeVideoId(input) {
@@ -400,6 +411,51 @@
       return ratio * (videoDuration || 0);
     }
 
+    function loadLoopRangeFromUrl() {
+      if (hasLoadedLoopFromUrl || !videoDuration) return;
+
+      const storedStart = getNumberParam(LOOP_PARAM_START);
+      const storedEnd = getNumberParam(LOOP_PARAM_END);
+
+      if (storedStart !== null || storedEnd !== null) {
+        loopStart = clampTime(storedStart !== null ? storedStart : 0);
+        loopEnd = clampTime(storedEnd !== null ? storedEnd : videoDuration);
+
+        if (loopEnd <= loopStart) {
+          loopEnd = Math.min(videoDuration, loopStart + LOOP_GAP_SECONDS);
+        }
+      }
+
+      hasLoadedLoopFromUrl = true;
+    }
+
+    function updateLoopParamsInUrl() {
+      if (!videoDuration) return;
+
+      const url = new URL(window.location.href);
+      url.searchParams.set(LOOP_PARAM_START, loopStart.toFixed(2));
+      url.searchParams.set(LOOP_PARAM_END, (loopEnd || videoDuration).toFixed(2));
+      window.history.replaceState(null, "", url);
+    }
+
+    function updateVideoTitle(attempt) {
+      if (!player || typeof player.getVideoData !== "function") return;
+
+      const data = player.getVideoData();
+      const title = data && typeof data.title === "string" ? data.title.trim() : "";
+
+      if (title) {
+        document.title = title;
+        return;
+      }
+
+      if (attempt < 10) {
+        window.setTimeout(function () {
+          updateVideoTitle(attempt + 1);
+        }, 500);
+      }
+    }
+
     function updateMuteButton() {
       const button = document.getElementById("muteToggle");
       button.textContent = isMuted ? "Unmute" : "Mute";
@@ -441,6 +497,8 @@
           loopStart = 0;
           loopEnd = videoDuration;
         }
+
+        loadLoopRangeFromUrl();
       }
 
       const currentTime = clampTime(player.getCurrentTime());
@@ -540,12 +598,14 @@
 
       if (handle === "start") {
         loopStart = Math.min(nextTime, Math.max(0, loopEnd - LOOP_GAP_SECONDS));
+        updateLoopParamsInUrl();
         seekToTime(loopStart);
         return;
       }
 
       if (handle === "end") {
         loopEnd = Math.max(nextTime, Math.min(videoDuration, loopStart + LOOP_GAP_SECONDS));
+        updateLoopParamsInUrl();
         seekToTime(loopEnd);
         return;
       }
@@ -562,6 +622,7 @@
     function resetLoopRange() {
       loopStart = 0;
       loopEnd = videoDuration || 0;
+      updateLoopParamsInUrl();
       updateTimeControl();
       setMessage("ループ範囲をリセットしました");
     }
@@ -676,6 +737,7 @@
             updateSpeedControl();
             updateInvertButton();
             updateTimeControl();
+            updateVideoTitle(0);
             timeTimer = window.setInterval(updateTimeControl, 250);
             setMessage("プレイヤーの準備ができました");
           },
