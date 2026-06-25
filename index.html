@@ -243,6 +243,8 @@
         <span id="loopValue">00:00 - 00:00</span>
       </div>
       <div class="loop-actions">
+        <button type="button" id="loopSetStart">A地点</button>
+        <button type="button" id="loopSetEnd">B地点</button>
         <button type="button" id="loopToggle">ループOFF</button>
         <button type="button" id="loopReset">範囲リセット</button>
       </div>
@@ -613,6 +615,44 @@
       updateTimeControl();
     }
 
+    function setLoopStartAtCurrentTime() {
+      if (!isPlayerReady() || !videoDuration) return;
+
+      const currentTime = clampTime(player.getCurrentTime());
+      loopStart = currentTime;
+
+      if (loopEnd <= loopStart) {
+        loopEnd = Math.min(videoDuration, loopStart + LOOP_GAP_SECONDS);
+      }
+
+      if (loopEnd <= loopStart) {
+        loopStart = Math.max(0, loopEnd - LOOP_GAP_SECONDS);
+      }
+
+      updateLoopParamsInUrl();
+      updateTimeControl();
+      setMessage("A地点を <code>" + formatTime(loopStart) + "</code> に設定しました");
+    }
+
+    function setLoopEndAtCurrentTime() {
+      if (!isPlayerReady() || !videoDuration) return;
+
+      const currentTime = clampTime(player.getCurrentTime());
+      loopEnd = currentTime;
+
+      if (loopEnd <= loopStart) {
+        loopStart = Math.max(0, loopEnd - LOOP_GAP_SECONDS);
+      }
+
+      if (loopEnd <= loopStart) {
+        loopEnd = Math.min(videoDuration, loopStart + LOOP_GAP_SECONDS);
+      }
+
+      updateLoopParamsInUrl();
+      updateTimeControl();
+      setMessage("B地点を <code>" + formatTime(loopEnd) + "</code> に設定しました");
+    }
+
     function toggleLoop() {
       isLoopEnabled = !isLoopEnabled;
       updateLoopButton();
@@ -769,6 +809,8 @@
     document.getElementById("loopEndHandle").addEventListener("pointerup", handleTrackPointerUp);
     document.getElementById("loopEndHandle").addEventListener("pointercancel", handleTrackPointerUp);
 
+    document.getElementById("loopSetStart").addEventListener("click", setLoopStartAtCurrentTime);
+    document.getElementById("loopSetEnd").addEventListener("click", setLoopEndAtCurrentTime);
     document.getElementById("loopToggle").addEventListener("click", toggleLoop);
     document.getElementById("loopReset").addEventListener("click", resetLoopRange);
 
