@@ -50,7 +50,25 @@
       flex-wrap: wrap;
     }
 
-    button {
+    .bookmarklet-section {
+      margin-top: 40px;
+      padding-top: 24px;
+      border-top: 1px solid #333;
+    }
+
+    .bookmarklet-section h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+    }
+
+    .bookmarklet-section p {
+      margin: 0 0 16px;
+      color: #ddd;
+      line-height: 1.7;
+    }
+
+    button,
+    .bookmarklet-button {
       appearance: none;
       border: 0;
       border-radius: 999px;
@@ -60,6 +78,12 @@
       background: #fff;
       color: #111;
       font-weight: 700;
+    }
+
+    .bookmarklet-button {
+      display: inline-flex;
+      align-items: center;
+      text-decoration: none;
     }
 
     code {
@@ -85,6 +109,15 @@
     </div>
 
     <div class="message" id="message"></div>
+
+    <section class="bookmarklet-section" aria-labelledby="bookmarkletTitle">
+      <h2 id="bookmarkletTitle">ブックマークレット</h2>
+      <p>下のボタンをブックマークバーへドラッグして追加してください。YouTubeの動画ページで使うと、このプレイヤーで開きます。</p>
+      <a
+        class="bookmarklet-button"
+        href="javascript:(()=>{const id=new URL(location.href).searchParams.get('v');if(!id){document.title='動画IDが見つかりません';return;}location.href='https://xnvplkd.github.io/z/?v='+encodeURIComponent(id);})();"
+      >このプレイヤーで開く</a>
+    </section>
   </main>
 
   <script>
