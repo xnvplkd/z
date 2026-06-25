@@ -5,271 +5,84 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>▶️</title>
   <style>
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #111;
-      color: #fff;
-    }
-
-    main {
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 24px;
-    }
-
-    .player-wrap {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 16 / 9;
-      background: #000;
-      border-radius: 12px;
-      overflow: hidden;
-    }
-
-    .player-wrap.inverted {
-      filter: invert(1);
-    }
-
-    #player {
-      width: 100%;
-      height: 100%;
-    }
-
-    .message {
-      margin-top: 16px;
-      line-height: 1.7;
-      color: #ddd;
-      word-break: break-all;
-    }
-
-    .controls {
-      margin-top: 16px;
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .speed-control,
-    .time-control {
-      margin-top: 16px;
-      padding: 14px;
-      border: 1px solid #333;
-      border-radius: 12px;
-      background: #181818;
-    }
-
-    .speed-control label,
-    .time-label-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      font-weight: 700;
-      margin-bottom: 10px;
-    }
-
-    .speed-control input[type="range"] {
-      width: 100%;
-    }
-
-    .speed-range-meta,
-    .loop-meta {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 6px;
-      color: #aaa;
-      font-size: 12px;
-    }
-
-    .time-track {
-      position: relative;
-      height: 40px;
-      margin: 10px 8px 0;
-      cursor: pointer;
-      touch-action: none;
-    }
-
-    .time-track::before {
-      content: "";
-      position: absolute;
-      left: 0;
-      right: 0;
-      top: 16px;
-      height: 8px;
-      border-radius: 999px;
-      background: #333;
-    }
-
-    .time-progress,
-    .loop-range {
-      position: absolute;
-      top: 16px;
-      height: 8px;
-      border-radius: 999px;
-      pointer-events: none;
-    }
-
-    .time-progress {
-      left: 0;
-      width: 0%;
-      background: #777;
-    }
-
-    .loop-range {
-      left: 0%;
-      width: 100%;
-      background: rgba(255, 255, 255, 0.32);
-    }
-
-    .loop-handle {
-      position: absolute;
-      top: 0;
-      transform: translateX(-50%);
-      min-width: 46px;
-      padding: 5px 9px;
-      border-radius: 999px;
-      font-size: 12px;
-      z-index: 2;
-      user-select: none;
-      touch-action: none;
-    }
-
-    .loop-start {
-      left: 0%;
-    }
-
-    .loop-end {
-      left: 100%;
-    }
-
-    .loop-actions {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-top: 12px;
-    }
-
-    .bookmarklet-section {
-      margin-top: 40px;
-      padding-top: 24px;
-      border-top: 1px solid #333;
-    }
-
-    .bookmarklet-section h2 {
-      margin: 0 0 12px;
-      font-size: 18px;
-    }
-
-    .bookmarklet-section p {
-      margin: 0 0 16px;
-      color: #ddd;
-      line-height: 1.7;
-    }
-
-    .bookmarklet-code {
-      display: block;
-      box-sizing: border-box;
-      width: 100%;
-      min-height: 96px;
-      margin-top: 16px;
-      padding: 12px;
-      border: 1px solid #333;
-      border-radius: 10px;
-      background: #222;
-      color: #fff;
-      font: 13px/1.6 ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
-      resize: vertical;
-      word-break: break-all;
-    }
-
-    .bookmarklet-copy-row {
-      margin-top: 12px;
-    }
-
-    button,
-    .bookmarklet-button {
-      appearance: none;
-      border: 0;
-      border-radius: 999px;
-      padding: 10px 16px;
-      font-size: 14px;
-      cursor: pointer;
-      background: #fff;
-      color: #111;
-      font-weight: 700;
-    }
-
-    .bookmarklet-button {
-      display: inline-flex;
-      align-items: center;
-      text-decoration: none;
-    }
-
-    code {
-      background: #222;
-      padding: 2px 6px;
-      border-radius: 6px;
-    }
+    body { margin: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #111; color: #fff; }
+    main { max-width: 960px; margin: 0 auto; padding: 24px; }
+    .player-wrap { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #000; border-radius: 12px; overflow: hidden; }
+    .player-wrap.inverted { filter: invert(1); }
+    #player { width: 100%; height: 100%; }
+    .message { margin-top: 16px; line-height: 1.7; color: #ddd; word-break: break-all; }
+    .controls { margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap; }
+    .speed-control, .time-control { margin-top: 16px; padding: 14px; border: 1px solid #333; border-radius: 12px; background: #181818; }
+    .speed-control label, .time-label-row { display: flex; justify-content: space-between; gap: 12px; font-weight: 700; margin-bottom: 10px; }
+    .speed-control input[type="range"] { width: 100%; }
+    .speed-range-meta, .loop-meta { display: flex; justify-content: space-between; margin-top: 6px; color: #aaa; font-size: 12px; }
+    .time-track { position: relative; height: 40px; margin: 10px 8px 0; cursor: pointer; touch-action: none; }
+    .time-track::before { content: ""; position: absolute; left: 0; right: 0; top: 16px; height: 8px; border-radius: 999px; background: #333; }
+    .time-progress, .loop-range { position: absolute; top: 16px; height: 8px; border-radius: 999px; pointer-events: none; }
+    .time-progress { left: 0; width: 0%; background: #777; }
+    .loop-range { left: 0%; width: 100%; background: rgba(255, 255, 255, 0.32); }
+    .loop-handle { position: absolute; top: 0; transform: translateX(-50%); min-width: 36px; padding: 5px 9px; border-radius: 999px; font-size: 12px; z-index: 2; user-select: none; touch-action: none; }
+    .loop-start { left: 0%; }
+    .loop-end { left: 100%; }
+    .loop-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
+    .loop-switch { display: inline-flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 999px; background: #222; font-size: 14px; font-weight: 700; cursor: pointer; user-select: none; }
+    .loop-switch input { position: absolute; opacity: 0; pointer-events: none; }
+    .switch-slider { position: relative; width: 38px; height: 22px; border-radius: 999px; background: #555; }
+    .switch-slider::before { content: ""; position: absolute; width: 18px; height: 18px; left: 2px; top: 2px; border-radius: 50%; background: #fff; transition: transform 0.16s ease; }
+    .loop-switch input:checked + .switch-slider { background: #fff; }
+    .loop-switch input:checked + .switch-slider::before { transform: translateX(16px); background: #111; }
+    .bookmarklet-section { margin-top: 40px; padding-top: 24px; border-top: 1px solid #333; }
+    .bookmarklet-section h2 { margin: 0 0 12px; font-size: 18px; }
+    .bookmarklet-section p { margin: 0 0 16px; color: #ddd; line-height: 1.7; }
+    .bookmarklet-code { display: block; box-sizing: border-box; width: 100%; min-height: 96px; margin-top: 16px; padding: 12px; border: 1px solid #333; border-radius: 10px; background: #222; color: #fff; font: 13px/1.6 ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace; resize: vertical; word-break: break-all; }
+    .bookmarklet-copy-row { margin-top: 12px; }
+    button, .bookmarklet-button { appearance: none; border: 0; border-radius: 999px; padding: 10px 16px; font-size: 14px; cursor: pointer; background: #fff; color: #111; font-weight: 700; }
+    .bookmarklet-button { display: inline-flex; align-items: center; text-decoration: none; }
+    code { background: #222; padding: 2px 6px; border-radius: 6px; }
   </style>
 </head>
 <body>
   <main>
-    <div class="player-wrap" id="playerWrap">
-      <div id="player"></div>
-    </div>
+    <div class="player-wrap" id="playerWrap"><div id="player"></div></div>
 
     <div class="controls">
       <button type="button" id="muteToggle">Mute</button>
-      <button type="button" id="speed2Toggle">x2.0</button>
-      <button type="button" id="skipForward90">&gt;&gt;90</button>
-      <button type="button" id="skipBack10">&lt;&lt;10</button>
-      <button type="button" id="skipForward10">&gt;&gt;10</button>
+      <button type="button" id="speed2Toggle">x2</button>
+      <button type="button" id="skipForward90">+90</button>
+      <button type="button" id="skipBack10">-10</button>
+      <button type="button" id="skipForward10">+10</button>
       <button type="button" id="invertToggle">Invert</button>
     </div>
 
     <div class="time-control">
-      <div class="time-label-row">
-        <span>再生位置</span>
-        <span id="timeValue">00:00 / 00:00</span>
-      </div>
-      <div class="time-track" id="timeTrack" aria-label="再生位置とループ範囲">
+      <div class="time-label-row"><span>Time</span><span id="timeValue">00:00 / 00:00</span></div>
+      <div class="time-track" id="timeTrack" aria-label="Playback position and loop range">
         <div class="time-progress" id="timeProgress"></div>
         <div class="loop-range" id="loopRange"></div>
-        <button type="button" class="loop-handle loop-start" id="loopStartHandle">開始</button>
-        <button type="button" class="loop-handle loop-end" id="loopEndHandle">終了</button>
+        <button type="button" class="loop-handle loop-start" id="loopStartHandle">A</button>
+        <button type="button" class="loop-handle loop-end" id="loopEndHandle">B</button>
       </div>
-      <div class="loop-meta">
-        <span>ループ範囲</span>
-        <span id="loopValue">00:00 - 00:00</span>
-      </div>
+      <div class="loop-meta"><span>Loop</span><span id="loopValue">00:00 - 00:00</span></div>
       <div class="loop-actions">
-        <button type="button" id="loopSetStart">A地点</button>
-        <button type="button" id="loopSetEnd">B地点</button>
-        <button type="button" id="loopToggle">ループOFF</button>
-        <button type="button" id="loopReset">範囲リセット</button>
+        <button type="button" id="loopSetStart">Set A</button>
+        <button type="button" id="loopSetEnd">Set B</button>
+        <label class="loop-switch"><span>Loop</span><input type="checkbox" id="loopToggle"><span class="switch-slider" aria-hidden="true"></span></label>
+        <button type="button" id="loopReset">Reset</button>
       </div>
     </div>
 
     <div class="speed-control">
-      <label for="speedRange">
-        <span>再生速度</span>
-        <span id="speedValue">1.00x</span>
-      </label>
+      <label for="speedRange"><span>Speed</span><span id="speedValue">1.00x</span></label>
       <input type="range" id="speedRange" min="0.25" max="2" step="0.05" value="1">
-      <div class="speed-range-meta" aria-hidden="true">
-        <span>0.25x</span>
-        <span>2.00x</span>
-      </div>
+      <div class="speed-range-meta" aria-hidden="true"><span>0.25x</span><span>2.00x</span></div>
     </div>
 
     <div class="message" id="message"></div>
 
     <section class="bookmarklet-section" aria-labelledby="bookmarkletTitle">
-      <h2 id="bookmarkletTitle">ブックマークレット</h2>
+      <h2 id="bookmarkletTitle">Bookmarklet</h2>
       <textarea class="bookmarklet-code" id="bookmarkletCode" readonly>javascript:(()=>{const id=new URL(location.href).searchParams.get("v");if(!id){document.title="動画IDが見つかりません";return;}location.href="https://xnvplkd.github.io/z/?v="+encodeURIComponent(id);})();</textarea>
-      <div class="bookmarklet-copy-row">
-        <button type="button" id="copyBookmarklet">コピー</button>
-      </div>
+      <div class="bookmarklet-copy-row"><button type="button" id="copyBookmarklet">Copy</button></div>
     </section>
   </main>
 
@@ -300,209 +113,71 @@
     let timeTimer = null;
     let hasLoadedLoopFromUrl = false;
 
-    function getParam(name) {
-      return new URLSearchParams(window.location.search).get(name);
-    }
-
-    function getNumberParam(name) {
-      const value = getParam(name);
-      if (value === null || value === "") return null;
-
-      const number = Number(value);
-      return Number.isFinite(number) ? number : null;
-    }
+    function getParam(name) { return new URLSearchParams(window.location.search).get(name); }
+    function getNumberParam(name) { const value = getParam(name); if (value === null || value === "") return null; const number = Number(value); return Number.isFinite(number) ? number : null; }
 
     function extractYouTubeVideoId(input) {
       if (!input) return null;
-
       const value = input.trim();
-
-      // 動画IDだけ渡された場合にも対応
-      if (/^[a-zA-Z0-9_-]{11}$/.test(value)) {
-        return value;
-      }
-
+      if (/^[a-zA-Z0-9_-]{11}$/.test(value)) return value;
       try {
         const url = new URL(value);
         const host = url.hostname.replace(/^www\./, "");
-
-        // https://www.youtube.com/watch?v=VIDEO_ID
         const v = url.searchParams.get("v");
-        if (v && /^[a-zA-Z0-9_-]{11}$/.test(v)) {
-          return v;
-        }
-
-        // https://youtu.be/VIDEO_ID
+        if (v && /^[a-zA-Z0-9_-]{11}$/.test(v)) return v;
         if (host === "youtu.be") {
           const id = url.pathname.split("/").filter(Boolean)[0];
-          if (id && /^[a-zA-Z0-9_-]{11}$/.test(id)) {
-            return id;
-          }
+          if (id && /^[a-zA-Z0-9_-]{11}$/.test(id)) return id;
         }
-
-        // https://www.youtube.com/embed/VIDEO_ID
-        // https://www.youtube-nocookie.com/embed/VIDEO_ID
-        // https://www.youtube.com/shorts/VIDEO_ID
-        // https://www.youtube.com/live/VIDEO_ID
         const parts = url.pathname.split("/").filter(Boolean);
         const markers = ["embed", "shorts", "live"];
-
         for (const marker of markers) {
           const index = parts.indexOf(marker);
           const id = parts[index + 1];
-
-          if (index !== -1 && id && /^[a-zA-Z0-9_-]{11}$/.test(id)) {
-            return id;
-          }
+          if (index !== -1 && id && /^[a-zA-Z0-9_-]{11}$/.test(id)) return id;
         }
-      } catch (error) {
-        return null;
-      }
-
+      } catch (error) { return null; }
       return null;
     }
 
-    function setMessage(text) {
-      document.getElementById("message").innerHTML = text;
-    }
-
-    function isPlayerReady() {
-      return player && typeof player.getCurrentTime === "function";
-    }
-
-    function formatRate(rate) {
-      return Number(rate).toFixed(2) + "x";
-    }
-
-    function normalizeRate(rate) {
-      const parsedRate = Number(rate);
-      if (!Number.isFinite(parsedRate)) return NORMAL_RATE;
-
-      const clampedRate = Math.min(MAX_RATE, Math.max(MIN_RATE, parsedRate));
-      return Math.round(clampedRate / RATE_STEP) * RATE_STEP;
-    }
-
-    function formatTime(seconds) {
-      const safeSeconds = Math.max(0, Math.floor(Number(seconds) || 0));
-      const hours = Math.floor(safeSeconds / 3600);
-      const minutes = Math.floor((safeSeconds % 3600) / 60);
-      const secs = safeSeconds % 60;
-
-      if (hours > 0) {
-        return String(hours) + ":" + String(minutes).padStart(2, "0") + ":" + String(secs).padStart(2, "0");
-      }
-
-      return String(minutes).padStart(2, "0") + ":" + String(secs).padStart(2, "0");
-    }
-
-    function clampTime(seconds) {
-      const parsedSeconds = Number(seconds);
-      if (!Number.isFinite(parsedSeconds)) return 0;
-      return Math.min(videoDuration || 0, Math.max(0, parsedSeconds));
-    }
-
-    function timeToPercent(seconds) {
-      if (!videoDuration) return 0;
-      return clampTime(seconds) / videoDuration * 100;
-    }
-
-    function getTimeFromPointer(event) {
-      const track = document.getElementById("timeTrack");
-      const rect = track.getBoundingClientRect();
-      const ratio = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
-      return ratio * (videoDuration || 0);
-    }
+    function setMessage(text) { document.getElementById("message").innerHTML = text; }
+    function isPlayerReady() { return player && typeof player.getCurrentTime === "function"; }
+    function formatRate(rate) { return Number(rate).toFixed(2) + "x"; }
+    function normalizeRate(rate) { const parsedRate = Number(rate); if (!Number.isFinite(parsedRate)) return NORMAL_RATE; const clampedRate = Math.min(MAX_RATE, Math.max(MIN_RATE, parsedRate)); return Math.round(clampedRate / RATE_STEP) * RATE_STEP; }
+    function formatTime(seconds) { const safeSeconds = Math.max(0, Math.floor(Number(seconds) || 0)); const hours = Math.floor(safeSeconds / 3600); const minutes = Math.floor((safeSeconds % 3600) / 60); const secs = safeSeconds % 60; if (hours > 0) return String(hours) + ":" + String(minutes).padStart(2, "0") + ":" + String(secs).padStart(2, "0"); return String(minutes).padStart(2, "0") + ":" + String(secs).padStart(2, "0"); }
+    function clampTime(seconds) { const parsedSeconds = Number(seconds); if (!Number.isFinite(parsedSeconds)) return 0; return Math.min(videoDuration || 0, Math.max(0, parsedSeconds)); }
+    function timeToPercent(seconds) { if (!videoDuration) return 0; return clampTime(seconds) / videoDuration * 100; }
+    function getTimeFromPointer(event) { const track = document.getElementById("timeTrack"); const rect = track.getBoundingClientRect(); const ratio = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width)); return ratio * (videoDuration || 0); }
 
     function loadLoopRangeFromUrl() {
       if (hasLoadedLoopFromUrl || !videoDuration) return;
-
       const storedStart = getNumberParam(LOOP_PARAM_START);
       const storedEnd = getNumberParam(LOOP_PARAM_END);
-
       if (storedStart !== null || storedEnd !== null) {
         loopStart = clampTime(storedStart !== null ? storedStart : 0);
         loopEnd = clampTime(storedEnd !== null ? storedEnd : videoDuration);
-
-        if (loopEnd <= loopStart) {
-          loopEnd = Math.min(videoDuration, loopStart + LOOP_GAP_SECONDS);
-        }
+        if (loopEnd <= loopStart) loopEnd = Math.min(videoDuration, loopStart + LOOP_GAP_SECONDS);
       }
-
       hasLoadedLoopFromUrl = true;
     }
 
-    function updateLoopParamsInUrl() {
-      if (!videoDuration) return;
-
-      const url = new URL(window.location.href);
-      url.searchParams.set(LOOP_PARAM_START, loopStart.toFixed(2));
-      url.searchParams.set(LOOP_PARAM_END, (loopEnd || videoDuration).toFixed(2));
-      window.history.replaceState(null, "", url);
-    }
-
-    function updateVideoTitle(attempt) {
-      if (!player || typeof player.getVideoData !== "function") return;
-
-      const data = player.getVideoData();
-      const title = data && typeof data.title === "string" ? data.title.trim() : "";
-
-      if (title) {
-        document.title = title;
-        return;
-      }
-
-      if (attempt < 10) {
-        window.setTimeout(function () {
-          updateVideoTitle(attempt + 1);
-        }, 500);
-      }
-    }
-
-    function updateMuteButton() {
-      const button = document.getElementById("muteToggle");
-      button.textContent = isMuted ? "Unmute" : "Mute";
-    }
-
-    function updateSpeedButton() {
-      const speed2Button = document.getElementById("speed2Toggle");
-      speed2Button.textContent = currentRate === SPEED_2 ? "x1.0" : "x2.0";
-    }
-
-    function updateSpeedControl() {
-      const speedRange = document.getElementById("speedRange");
-      const speedValue = document.getElementById("speedValue");
-      const normalizedRate = normalizeRate(currentRate);
-
-      speedRange.value = String(normalizedRate);
-      speedValue.textContent = formatRate(normalizedRate);
-    }
-
-    function updateInvertButton() {
-      const button = document.getElementById("invertToggle");
-      button.textContent = isInverted ? "Normal" : "Invert";
-    }
-
-    function updateLoopButton() {
-      const button = document.getElementById("loopToggle");
-      button.textContent = isLoopEnabled ? "ループON" : "ループOFF";
-    }
+    function updateLoopParamsInUrl() { if (!videoDuration) return; const url = new URL(window.location.href); url.searchParams.set(LOOP_PARAM_START, loopStart.toFixed(2)); url.searchParams.set(LOOP_PARAM_END, (loopEnd || videoDuration).toFixed(2)); window.history.replaceState(null, "", url); }
+    function updateVideoTitle(attempt) { if (!player || typeof player.getVideoData !== "function") return; const data = player.getVideoData(); const title = data && typeof data.title === "string" ? data.title.trim() : ""; if (title) { document.title = title; return; } if (attempt < 10) window.setTimeout(function () { updateVideoTitle(attempt + 1); }, 500); }
+    function updateMuteButton() { const button = document.getElementById("muteToggle"); button.textContent = isMuted ? "Unmute" : "Mute"; }
+    function updateSpeedButton() { const speed2Button = document.getElementById("speed2Toggle"); speed2Button.textContent = currentRate === SPEED_2 ? "x1" : "x2"; }
+    function updateSpeedControl() { const speedRange = document.getElementById("speedRange"); const speedValue = document.getElementById("speedValue"); const normalizedRate = normalizeRate(currentRate); speedRange.value = String(normalizedRate); speedValue.textContent = formatRate(normalizedRate); }
+    function updateInvertButton() { const button = document.getElementById("invertToggle"); button.textContent = isInverted ? "Normal" : "Invert"; }
+    function updateLoopButton() { const input = document.getElementById("loopToggle"); input.checked = isLoopEnabled; }
 
     function updateTimeControl() {
       if (!isPlayerReady()) return;
-
       const duration = player.getDuration ? Number(player.getDuration()) : 0;
       if (Number.isFinite(duration) && duration > 0) {
         const previousDuration = videoDuration;
         videoDuration = duration;
-
-        if (!previousDuration || !loopEnd) {
-          loopStart = 0;
-          loopEnd = videoDuration;
-        }
-
+        if (!previousDuration || !loopEnd) { loopStart = 0; loopEnd = videoDuration; }
         loadLoopRangeFromUrl();
       }
-
       const currentTime = clampTime(player.getCurrentTime());
       const timeValue = document.getElementById("timeValue");
       const timeProgress = document.getElementById("timeProgress");
@@ -510,12 +185,7 @@
       const loopStartHandle = document.getElementById("loopStartHandle");
       const loopEndHandle = document.getElementById("loopEndHandle");
       const loopValue = document.getElementById("loopValue");
-
-      if (isLoopEnabled && !activeLoopHandle && loopEnd > loopStart && currentTime >= loopEnd) {
-        player.seekTo(loopStart, true);
-        return;
-      }
-
+      if (isLoopEnabled && !activeLoopHandle && loopEnd > loopStart && currentTime >= loopEnd) { player.seekTo(loopStart, true); return; }
       timeValue.textContent = formatTime(currentTime) + " / " + formatTime(videoDuration);
       timeProgress.style.width = timeToPercent(currentTime) + "%";
       loopStartHandle.style.left = timeToPercent(loopStart) + "%";
@@ -526,276 +196,58 @@
       updateLoopButton();
     }
 
-    function setMuted(muted) {
-      if (!player) return;
-
-      if (muted) {
-        if (typeof player.mute === "function") {
-          player.mute();
-        }
-      } else {
-        if (typeof player.unMute === "function") {
-          player.unMute();
-        }
-      }
-
-      isMuted = muted;
-      updateMuteButton();
-      setMessage(isMuted ? "ミュートにしました" : "ミュートを解除しました");
-    }
-
-    function toggleMute() {
-      if (!player) return;
-      setMuted(!isMuted);
-    }
-
-    function setPlaybackRate(rate) {
-      if (!player || typeof player.setPlaybackRate !== "function") return;
-
-      const nextRate = normalizeRate(rate);
-
-      player.setPlaybackRate(nextRate);
-      currentRate = nextRate;
-      updateSpeedButton();
-      updateSpeedControl();
-
-      setMessage("再生速度を <code>" + formatRate(nextRate) + "</code> に設定しました");
-    }
-
-    function toggleSpeed2() {
-      if (!isPlayerReady()) return;
-
-      player.playVideo();
-
-      if (currentRate === SPEED_2) {
-        setPlaybackRate(NORMAL_RATE);
-        return;
-      }
-
-      setPlaybackRate(SPEED_2);
-    }
-
-    function changeSpeedFromRange() {
-      const speedRange = document.getElementById("speedRange");
-      setPlaybackRate(speedRange.value);
-    }
-
-    function seekToTime(seconds) {
-      if (!isPlayerReady() || !videoDuration) return;
-      player.seekTo(clampTime(seconds), true);
-      updateTimeControl();
-    }
-
-    function seekBy(seconds) {
-      if (!isPlayerReady()) return;
-
-      const currentTime = player.getCurrentTime();
-      seekToTime(currentTime + seconds);
-    }
+    function setMuted(muted) { if (!player) return; if (muted) { if (typeof player.mute === "function") player.mute(); } else { if (typeof player.unMute === "function") player.unMute(); } isMuted = muted; updateMuteButton(); setMessage(isMuted ? "Muted" : "Unmuted"); }
+    function toggleMute() { if (!player) return; setMuted(!isMuted); }
+    function setPlaybackRate(rate) { if (!player || typeof player.setPlaybackRate !== "function") return; const nextRate = normalizeRate(rate); player.setPlaybackRate(nextRate); currentRate = nextRate; updateSpeedButton(); updateSpeedControl(); setMessage("Speed <code>" + formatRate(nextRate) + "</code>"); }
+    function toggleSpeed2() { if (!isPlayerReady()) return; player.playVideo(); if (currentRate === SPEED_2) { setPlaybackRate(NORMAL_RATE); return; } setPlaybackRate(SPEED_2); }
+    function changeSpeedFromRange() { const speedRange = document.getElementById("speedRange"); setPlaybackRate(speedRange.value); }
+    function seekToTime(seconds) { if (!isPlayerReady() || !videoDuration) return; player.seekTo(clampTime(seconds), true); updateTimeControl(); }
+    function seekBy(seconds) { if (!isPlayerReady()) return; const currentTime = player.getCurrentTime(); seekToTime(currentTime + seconds); }
 
     function setLoopPoint(handle, seconds) {
       if (!videoDuration) return;
-
       const nextTime = clampTime(seconds);
-
-      if (handle === "start") {
-        loopStart = Math.min(nextTime, Math.max(0, loopEnd - LOOP_GAP_SECONDS));
-        updateLoopParamsInUrl();
-        seekToTime(loopStart);
-        return;
-      }
-
-      if (handle === "end") {
-        loopEnd = Math.max(nextTime, Math.min(videoDuration, loopStart + LOOP_GAP_SECONDS));
-        updateLoopParamsInUrl();
-        seekToTime(loopEnd);
-        return;
-      }
-
+      if (handle === "start") { loopStart = Math.min(nextTime, Math.max(0, loopEnd - LOOP_GAP_SECONDS)); updateLoopParamsInUrl(); seekToTime(loopStart); return; }
+      if (handle === "end") { loopEnd = Math.max(nextTime, Math.min(videoDuration, loopStart + LOOP_GAP_SECONDS)); updateLoopParamsInUrl(); seekToTime(loopEnd); return; }
       updateTimeControl();
     }
 
-    function setLoopStartAtCurrentTime() {
-      if (!isPlayerReady() || !videoDuration) return;
+    function setLoopStartAtCurrentTime() { if (!isPlayerReady() || !videoDuration) return; const currentTime = clampTime(player.getCurrentTime()); loopStart = currentTime; if (loopEnd <= loopStart) loopEnd = Math.min(videoDuration, loopStart + LOOP_GAP_SECONDS); if (loopEnd <= loopStart) loopStart = Math.max(0, loopEnd - LOOP_GAP_SECONDS); updateLoopParamsInUrl(); updateTimeControl(); setMessage("A <code>" + formatTime(loopStart) + "</code>"); }
+    function setLoopEndAtCurrentTime() { if (!isPlayerReady() || !videoDuration) return; const currentTime = clampTime(player.getCurrentTime()); loopEnd = currentTime; if (loopEnd <= loopStart) loopStart = Math.max(0, loopEnd - LOOP_GAP_SECONDS); if (loopEnd <= loopStart) loopEnd = Math.min(videoDuration, loopStart + LOOP_GAP_SECONDS); updateLoopParamsInUrl(); updateTimeControl(); setMessage("B <code>" + formatTime(loopEnd) + "</code>"); }
+    function toggleLoop() { const input = document.getElementById("loopToggle"); isLoopEnabled = input.checked; updateLoopButton(); setMessage(isLoopEnabled ? "Loop ON" : "Loop OFF"); }
+    function resetLoopRange() { loopStart = 0; loopEnd = videoDuration || 0; updateLoopParamsInUrl(); updateTimeControl(); setMessage("Reset loop"); }
 
-      const currentTime = clampTime(player.getCurrentTime());
-      loopStart = currentTime;
-
-      if (loopEnd <= loopStart) {
-        loopEnd = Math.min(videoDuration, loopStart + LOOP_GAP_SECONDS);
-      }
-
-      if (loopEnd <= loopStart) {
-        loopStart = Math.max(0, loopEnd - LOOP_GAP_SECONDS);
-      }
-
-      updateLoopParamsInUrl();
-      updateTimeControl();
-      setMessage("A地点を <code>" + formatTime(loopStart) + "</code> に設定しました");
-    }
-
-    function setLoopEndAtCurrentTime() {
-      if (!isPlayerReady() || !videoDuration) return;
-
-      const currentTime = clampTime(player.getCurrentTime());
-      loopEnd = currentTime;
-
-      if (loopEnd <= loopStart) {
-        loopStart = Math.max(0, loopEnd - LOOP_GAP_SECONDS);
-      }
-
-      if (loopEnd <= loopStart) {
-        loopEnd = Math.min(videoDuration, loopStart + LOOP_GAP_SECONDS);
-      }
-
-      updateLoopParamsInUrl();
-      updateTimeControl();
-      setMessage("B地点を <code>" + formatTime(loopEnd) + "</code> に設定しました");
-    }
-
-    function toggleLoop() {
-      isLoopEnabled = !isLoopEnabled;
-      updateLoopButton();
-      setMessage(isLoopEnabled ? "ループを有効にしました" : "ループを解除しました");
-    }
-
-    function resetLoopRange() {
-      loopStart = 0;
-      loopEnd = videoDuration || 0;
-      updateLoopParamsInUrl();
-      updateTimeControl();
-      setMessage("ループ範囲をリセットしました");
-    }
-
-    function handleTrackPointerDown(event) {
-      if (!videoDuration) return;
-
-      if (event.target.id === "loopStartHandle") {
-        activeLoopHandle = "start";
-        event.target.setPointerCapture(event.pointerId);
-        event.preventDefault();
-        return;
-      }
-
-      if (event.target.id === "loopEndHandle") {
-        activeLoopHandle = "end";
-        event.target.setPointerCapture(event.pointerId);
-        event.preventDefault();
-        return;
-      }
-
-      isDraggingSeek = true;
-      seekToTime(getTimeFromPointer(event));
-      event.currentTarget.setPointerCapture(event.pointerId);
-      event.preventDefault();
-    }
-
-    function handleTrackPointerMove(event) {
-      if (!videoDuration) return;
-
-      if (activeLoopHandle) {
-        setLoopPoint(activeLoopHandle, getTimeFromPointer(event));
-        event.preventDefault();
-        return;
-      }
-
-      if (isDraggingSeek) {
-        seekToTime(getTimeFromPointer(event));
-        event.preventDefault();
-      }
-    }
-
-    function handleTrackPointerUp() {
-      activeLoopHandle = null;
-      isDraggingSeek = false;
-      updateTimeControl();
-    }
-
-    function toggleInvert() {
-      const playerWrap = document.getElementById("playerWrap");
-
-      isInverted = !isInverted;
-      playerWrap.classList.toggle("inverted", isInverted);
-      updateInvertButton();
-
-      setMessage(isInverted ? "色反転を有効にしました" : "色反転を解除しました");
-    }
+    function handleTrackPointerDown(event) { if (!videoDuration) return; if (event.target.id === "loopStartHandle") { activeLoopHandle = "start"; event.target.setPointerCapture(event.pointerId); event.preventDefault(); return; } if (event.target.id === "loopEndHandle") { activeLoopHandle = "end"; event.target.setPointerCapture(event.pointerId); event.preventDefault(); return; } isDraggingSeek = true; seekToTime(getTimeFromPointer(event)); event.currentTarget.setPointerCapture(event.pointerId); event.preventDefault(); }
+    function handleTrackPointerMove(event) { if (!videoDuration) return; if (activeLoopHandle) { setLoopPoint(activeLoopHandle, getTimeFromPointer(event)); event.preventDefault(); return; } if (isDraggingSeek) { seekToTime(getTimeFromPointer(event)); event.preventDefault(); } }
+    function handleTrackPointerUp() { activeLoopHandle = null; isDraggingSeek = false; updateTimeControl(); }
+    function toggleInvert() { const playerWrap = document.getElementById("playerWrap"); isInverted = !isInverted; playerWrap.classList.toggle("inverted", isInverted); updateInvertButton(); setMessage(isInverted ? "Invert ON" : "Invert OFF"); }
 
     function copyBookmarklet() {
       const code = document.getElementById("bookmarkletCode");
       const button = document.getElementById("copyBookmarklet");
-
-      function showCopied() {
-        button.textContent = "コピー済み";
-        setTimeout(function () {
-          button.textContent = "コピー";
-        }, 1600);
-      }
-
-      if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(BOOKMARKLET_CODE).then(showCopied).catch(function () {
-          code.select();
-          document.execCommand("copy");
-          showCopied();
-        });
-        return;
-      }
-
-      code.select();
-      document.execCommand("copy");
-      showCopied();
+      function showCopied() { button.textContent = "Copied"; setTimeout(function () { button.textContent = "Copy"; }, 1600); }
+      if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(BOOKMARKLET_CODE).then(showCopied).catch(function () { code.select(); document.execCommand("copy"); showCopied(); }); return; }
+      code.select(); document.execCommand("copy"); showCopied();
     }
 
     function onYouTubeIframeAPIReady() {
       const rawUrl = getParam("url");
       const rawId = getParam("v");
       const videoId = extractYouTubeVideoId(rawUrl || rawId);
-
-      if (!videoId) {
-        setMessage(
-          "URLパラメータにYouTube動画URLを指定してください<br>" +
-          "例: <code>?v=動画ID</code>"
-        );
-        return;
-      }
-
+      if (!videoId) { setMessage("Add a YouTube video ID in the URL<br>Example: <code>?v=videoId</code>"); return; }
       player = new YT.Player("player", {
-        width: "100%",
-        height: "100%",
-        videoId: videoId,
-        host: YOUTUBE_NOCOOKIE_HOST,
-        playerVars: {
-          playsinline: 1,
-          rel: 0
-        },
+        width: "100%", height: "100%", videoId: videoId, host: YOUTUBE_NOCOOKIE_HOST,
+        playerVars: { playsinline: 1, rel: 0 },
         events: {
-          onReady: function () {
-            setMuted(true);
-            setPlaybackRate(NORMAL_RATE);
-            updateMuteButton();
-            updateSpeedButton();
-            updateSpeedControl();
-            updateInvertButton();
-            updateTimeControl();
-            updateVideoTitle(0);
-            timeTimer = window.setInterval(updateTimeControl, 250);
-            setMessage("プレイヤーの準備ができました");
-          },
-          onPlaybackRateChange: function (event) {
-            currentRate = normalizeRate(event.data);
-            updateSpeedButton();
-            updateSpeedControl();
-          }
+          onReady: function () { setMuted(true); setPlaybackRate(NORMAL_RATE); updateMuteButton(); updateSpeedButton(); updateSpeedControl(); updateInvertButton(); updateTimeControl(); updateVideoTitle(0); timeTimer = window.setInterval(updateTimeControl, 250); setMessage("Ready"); },
+          onPlaybackRateChange: function (event) { currentRate = normalizeRate(event.data); updateSpeedButton(); updateSpeedControl(); }
         }
       });
     }
 
     document.getElementById("muteToggle").addEventListener("click", toggleMute);
-
     document.getElementById("speed2Toggle").addEventListener("click", toggleSpeed2);
-
     document.getElementById("speedRange").addEventListener("input", changeSpeedFromRange);
-
     document.getElementById("timeTrack").addEventListener("pointerdown", handleTrackPointerDown);
     document.getElementById("timeTrack").addEventListener("pointermove", handleTrackPointerMove);
     document.getElementById("timeTrack").addEventListener("pointerup", handleTrackPointerUp);
@@ -808,37 +260,17 @@
     document.getElementById("loopEndHandle").addEventListener("pointermove", handleTrackPointerMove);
     document.getElementById("loopEndHandle").addEventListener("pointerup", handleTrackPointerUp);
     document.getElementById("loopEndHandle").addEventListener("pointercancel", handleTrackPointerUp);
-
     document.getElementById("loopSetStart").addEventListener("click", setLoopStartAtCurrentTime);
     document.getElementById("loopSetEnd").addEventListener("click", setLoopEndAtCurrentTime);
-    document.getElementById("loopToggle").addEventListener("click", toggleLoop);
+    document.getElementById("loopToggle").addEventListener("change", toggleLoop);
     document.getElementById("loopReset").addEventListener("click", resetLoopRange);
-
-    document.getElementById("skipForward90").addEventListener("click", function () {
-      seekBy(SKIP_90_SECONDS);
-    });
-
-    document.getElementById("skipBack10").addEventListener("click", function () {
-      seekBy(-SKIP_10_SECONDS);
-    });
-
-    document.getElementById("skipForward10").addEventListener("click", function () {
-      seekBy(SKIP_10_SECONDS);
-    });
-
+    document.getElementById("skipForward90").addEventListener("click", function () { seekBy(SKIP_90_SECONDS); });
+    document.getElementById("skipBack10").addEventListener("click", function () { seekBy(-SKIP_10_SECONDS); });
+    document.getElementById("skipForward10").addEventListener("click", function () { seekBy(SKIP_10_SECONDS); });
     document.getElementById("invertToggle").addEventListener("click", toggleInvert);
-
     document.getElementById("copyBookmarklet").addEventListener("click", copyBookmarklet);
-
-    updateMuteButton();
-    updateSpeedButton();
-    updateSpeedControl();
-    updateInvertButton();
-    updateLoopButton();
-
-    const tag = document.createElement("script");
-    tag.src = "https://www.youtube.com/iframe_api";
-    document.head.appendChild(tag);
+    updateMuteButton(); updateSpeedButton(); updateSpeedControl(); updateInvertButton(); updateLoopButton();
+    const tag = document.createElement("script"); tag.src = "https://www.youtube.com/iframe_api"; document.head.appendChild(tag);
   </script>
 </body>
 </html>
