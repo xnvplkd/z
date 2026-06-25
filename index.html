@@ -451,7 +451,7 @@
       const loopEndHandle = document.getElementById("loopEndHandle");
       const loopValue = document.getElementById("loopValue");
 
-      if (isLoopEnabled && loopEnd > loopStart && currentTime >= loopEnd) {
+      if (isLoopEnabled && !activeLoopHandle && loopEnd > loopStart && currentTime >= loopEnd) {
         player.seekTo(loopStart, true);
         return;
       }
@@ -540,10 +540,14 @@
 
       if (handle === "start") {
         loopStart = Math.min(nextTime, Math.max(0, loopEnd - LOOP_GAP_SECONDS));
+        seekToTime(loopStart);
+        return;
       }
 
       if (handle === "end") {
         loopEnd = Math.max(nextTime, Math.min(videoDuration, loopStart + LOOP_GAP_SECONDS));
+        seekToTime(loopEnd);
+        return;
       }
 
       updateTimeControl();
@@ -603,6 +607,7 @@
     function handleTrackPointerUp() {
       activeLoopHandle = null;
       isDraggingSeek = false;
+      updateTimeControl();
     }
 
     function toggleInvert() {
