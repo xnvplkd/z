@@ -67,6 +67,26 @@
       line-height: 1.7;
     }
 
+    .bookmarklet-code {
+      display: block;
+      box-sizing: border-box;
+      width: 100%;
+      min-height: 96px;
+      margin-top: 16px;
+      padding: 12px;
+      border: 1px solid #333;
+      border-radius: 10px;
+      background: #222;
+      color: #fff;
+      font: 13px/1.6 ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+      resize: vertical;
+      word-break: break-all;
+    }
+
+    .bookmarklet-copy-row {
+      margin-top: 12px;
+    }
+
     button,
     .bookmarklet-button {
       appearance: none;
@@ -115,8 +135,12 @@
       <p>下のボタンをブックマークバーへドラッグして追加してください。YouTubeの動画ページで使うと、このプレイヤーで開きます。</p>
       <a
         class="bookmarklet-button"
-        href="javascript:(()=>{const id=new URL(location.href).searchParams.get('v');if(!id){document.title='動画IDが見つかりません';return;}location.href='https://xnvplkd.github.io/z/?v='+encodeURIComponent(id);})();"
+        href='javascript:(()=>{const id=new URL(location.href).searchParams.get("v");if(!id){document.title="動画IDが見つかりません";return;}location.href="https://xnvplkd.github.io/z/?v="+encodeURIComponent(id);})();'
       >このプレイヤーで開く</a>
+      <textarea class="bookmarklet-code" id="bookmarkletCode" readonly>javascript:(()=>{const id=new URL(location.href).searchParams.get("v");if(!id){document.title="動画IDが見つかりません";return;}location.href="https://xnvplkd.github.io/z/?v="+encodeURIComponent(id);})();</textarea>
+      <div class="bookmarklet-copy-row">
+        <button type="button" id="copyBookmarklet">コピー</button>
+      </div>
     </section>
   </main>
 
@@ -126,6 +150,7 @@
     const SKIP_10_SECONDS = 10;
     const SKIP_90_SECONDS = 90;
     const YOUTUBE_NOCOOKIE_HOST = "https://www.youtube-nocookie.com";
+    const BOOKMARKLET_CODE = 'javascript:(()=>{const id=new URL(location.href).searchParams.get("v");if(!id){document.title="動画IDが見つかりません";return;}location.href="https://xnvplkd.github.io/z/?v="+encodeURIComponent(id);})();';
 
     let player = null;
     let currentRate = NORMAL_RATE;
@@ -293,6 +318,31 @@
       setMessage(isInverted ? "色反転を有効にしました" : "色反転を解除しました");
     }
 
+    function copyBookmarklet() {
+      const code = document.getElementById("bookmarkletCode");
+      const button = document.getElementById("copyBookmarklet");
+
+      function showCopied() {
+        button.textContent = "コピー済み";
+        setTimeout(function () {
+          button.textContent = "コピー";
+        }, 1600);
+      }
+
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(BOOKMARKLET_CODE).then(showCopied).catch(function () {
+          code.select();
+          document.execCommand("copy");
+          showCopied();
+        });
+        return;
+      }
+
+      code.select();
+      document.execCommand("copy");
+      showCopied();
+    }
+
     function onYouTubeIframeAPIReady() {
       const rawUrl = getParam("url");
       const rawId = getParam("v");
@@ -350,6 +400,8 @@
     });
 
     document.getElementById("invertToggle").addEventListener("click", toggleInvert);
+
+    document.getElementById("copyBookmarklet").addEventListener("click", copyBookmarklet);
 
     updateMuteButton();
     updateSpeedButton();
