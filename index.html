@@ -172,11 +172,6 @@
 
     <section class="bookmarklet-section" aria-labelledby="bookmarkletTitle">
       <h2 id="bookmarkletTitle">ブックマークレット</h2>
-      <p>下のボタンをブックマークバーへドラッグして追加してください。YouTubeの動画ページで使うと、このプレイヤーで開きます。</p>
-      <a
-        class="bookmarklet-button"
-        href='javascript:(()=>{const id=new URL(location.href).searchParams.get("v");if(!id){document.title="動画IDが見つかりません";return;}location.href="https://xnvplkd.github.io/z/?v="+encodeURIComponent(id);})();'
-      >このプレイヤーで開く</a>
       <textarea class="bookmarklet-code" id="bookmarkletCode" readonly>javascript:(()=>{const id=new URL(location.href).searchParams.get("v");if(!id){document.title="動画IDが見つかりません";return;}location.href="https://xnvplkd.github.io/z/?v="+encodeURIComponent(id);})();</textarea>
       <div class="bookmarklet-copy-row">
         <button type="button" id="copyBookmarklet">コピー</button>
@@ -414,8 +409,7 @@
       if (!videoId) {
         setMessage(
           "URLパラメータにYouTube動画URLを指定してください<br>" +
-          "例: <code>?v=LyH4MHShH2k</code><br>" +
-          "または <code>?url=https%3A%2F%2Fwww.youtube-nocookie.com%2Fembed%2FLyH4MHShH2k</code>"
+          "例: <code>?v=動画ID</code>" 
         );
         return;
       }
