@@ -50,7 +50,8 @@
       flex-wrap: wrap;
     }
 
-    .speed-control {
+    .speed-control,
+    .time-control {
       margin-top: 16px;
       padding: 14px;
       border: 1px solid #333;
@@ -58,7 +59,8 @@
       background: #181818;
     }
 
-    .speed-control label {
+    .speed-control label,
+    .time-label-row {
       display: flex;
       justify-content: space-between;
       gap: 12px;
@@ -70,12 +72,81 @@
       width: 100%;
     }
 
-    .speed-range-meta {
+    .speed-range-meta,
+    .loop-meta {
       display: flex;
       justify-content: space-between;
       margin-top: 6px;
       color: #aaa;
       font-size: 12px;
+    }
+
+    .time-track {
+      position: relative;
+      height: 40px;
+      margin: 10px 8px 0;
+      cursor: pointer;
+      touch-action: none;
+    }
+
+    .time-track::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 16px;
+      height: 8px;
+      border-radius: 999px;
+      background: #333;
+    }
+
+    .time-progress,
+    .loop-range {
+      position: absolute;
+      top: 16px;
+      height: 8px;
+      border-radius: 999px;
+      pointer-events: none;
+    }
+
+    .time-progress {
+      left: 0;
+      width: 0%;
+      background: #777;
+    }
+
+    .loop-range {
+      left: 0%;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.32);
+    }
+
+    .loop-handle {
+      position: absolute;
+      top: 0;
+      transform: translateX(-50%);
+      min-width: 46px;
+      padding: 5px 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      z-index: 2;
+      user-select: none;
+      touch-action: none;
+    }
+
+    .loop-start {
+      left: 0%;
+    }
+
+    .loop-end {
+      left: 100%;
+    }
+
+    .loop-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
     }
 
     .bookmarklet-section {
@@ -168,6 +239,27 @@
       </div>
     </div>
 
+    <div class="time-control">
+      <div class="time-label-row">
+        <span>再生位置</span>
+        <span id="timeValue">00:00 / 00:00</span>
+      </div>
+      <div class="time-track" id="timeTrack" aria-label="再生位置とループ範囲">
+        <div class="time-progress" id="timeProgress"></div>
+        <div class="loop-range" id="loopRange"></div>
+        <button type="button" class="loop-handle loop-start" id="loopStartHandle">開始</button>
+        <button type="button" class="loop-handle loop-end" id="loopEndHandle">終了</button>
+      </div>
+      <div class="loop-meta">
+        <span>ループ範囲</span>
+        <span id="loopValue">00:00 - 00:00</span>
+      </div>
+      <div class="loop-actions">
+        <button type="button" id="loopToggle">ループOFF</button>
+        <button type="button" id="loopReset">範囲リセット</button>
+      </div>
+    </div>
+
     <div class="message" id="message"></div>
 
     <section class="bookmarklet-section" aria-labelledby="bookmarkletTitle">
@@ -187,6 +279,7 @@
     const RATE_STEP = 0.05;
     const SKIP_10_SECONDS = 10;
     const SKIP_90_SECONDS = 90;
+    const LOOP_GAP_SECONDS = 0.5;
     const YOUTUBE_NOCOOKIE_HOST = "https://www.youtube-nocookie.com";
     const BOOKMARKLET_CODE = 'javascript:(()=>{const id=new URL(location.href).searchParams.get("v");if(!id){document.title="動画IDが見つかりません";return;}location.href="https://xnvplkd.github.io/z/?v="+encodeURIComponent(id);})();';
 
@@ -194,6 +287,13 @@
     let currentRate = NORMAL_RATE;
     let isMuted = true;
     let isInverted = false;
+    let videoDuration = 0;
+    let loopStart = 0;
+    let loopEnd = 0;
+    let isLoopEnabled = false;
+    let activeLoopHandle = null;
+    let isDraggingSeek = false;
+    let timeTimer = null;
 
     function getParam(name) {
       return new URLSearchParams(window.location.search).get(name);
@@ -269,6 +369,37 @@
       return Math.round(clampedRate / RATE_STEP) * RATE_STEP;
     }
 
+    function formatTime(seconds) {
+      const safeSeconds = Math.max(0, Math.floor(Number(seconds) || 0));
+      const hours = Math.floor(safeSeconds / 3600);
+      const minutes = Math.floor((safeSeconds % 3600) / 60);
+      const secs = safeSeconds % 60;
+
+      if (hours > 0) {
+        return String(hours) + ":" + String(minutes).padStart(2, "0") + ":" + String(secs).padStart(2, "0");
+      }
+
+      return String(minutes).padStart(2, "0") + ":" + String(secs).padStart(2, "0");
+    }
+
+    function clampTime(seconds) {
+      const parsedSeconds = Number(seconds);
+      if (!Number.isFinite(parsedSeconds)) return 0;
+      return Math.min(videoDuration || 0, Math.max(0, parsedSeconds));
+    }
+
+    function timeToPercent(seconds) {
+      if (!videoDuration) return 0;
+      return clampTime(seconds) / videoDuration * 100;
+    }
+
+    function getTimeFromPointer(event) {
+      const track = document.getElementById("timeTrack");
+      const rect = track.getBoundingClientRect();
+      const ratio = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
+      return ratio * (videoDuration || 0);
+    }
+
     function updateMuteButton() {
       const button = document.getElementById("muteToggle");
       button.textContent = isMuted ? "Unmute" : "Mute";
@@ -291,6 +422,48 @@
     function updateInvertButton() {
       const button = document.getElementById("invertToggle");
       button.textContent = isInverted ? "Normal" : "Invert";
+    }
+
+    function updateLoopButton() {
+      const button = document.getElementById("loopToggle");
+      button.textContent = isLoopEnabled ? "ループON" : "ループOFF";
+    }
+
+    function updateTimeControl() {
+      if (!isPlayerReady()) return;
+
+      const duration = player.getDuration ? Number(player.getDuration()) : 0;
+      if (Number.isFinite(duration) && duration > 0) {
+        const previousDuration = videoDuration;
+        videoDuration = duration;
+
+        if (!previousDuration || !loopEnd) {
+          loopStart = 0;
+          loopEnd = videoDuration;
+        }
+      }
+
+      const currentTime = clampTime(player.getCurrentTime());
+      const timeValue = document.getElementById("timeValue");
+      const timeProgress = document.getElementById("timeProgress");
+      const loopRange = document.getElementById("loopRange");
+      const loopStartHandle = document.getElementById("loopStartHandle");
+      const loopEndHandle = document.getElementById("loopEndHandle");
+      const loopValue = document.getElementById("loopValue");
+
+      if (isLoopEnabled && loopEnd > loopStart && currentTime >= loopEnd) {
+        player.seekTo(loopStart, true);
+        return;
+      }
+
+      timeValue.textContent = formatTime(currentTime) + " / " + formatTime(videoDuration);
+      timeProgress.style.width = timeToPercent(currentTime) + "%";
+      loopStartHandle.style.left = timeToPercent(loopStart) + "%";
+      loopEndHandle.style.left = timeToPercent(loopEnd || videoDuration) + "%";
+      loopRange.style.left = timeToPercent(loopStart) + "%";
+      loopRange.style.width = Math.max(0, timeToPercent(loopEnd || videoDuration) - timeToPercent(loopStart)) + "%";
+      loopValue.textContent = formatTime(loopStart) + " - " + formatTime(loopEnd || videoDuration);
+      updateLoopButton();
     }
 
     function setMuted(muted) {
@@ -347,23 +520,89 @@
       setPlaybackRate(speedRange.value);
     }
 
+    function seekToTime(seconds) {
+      if (!isPlayerReady() || !videoDuration) return;
+      player.seekTo(clampTime(seconds), true);
+      updateTimeControl();
+    }
+
     function seekBy(seconds) {
       if (!isPlayerReady()) return;
 
       const currentTime = player.getCurrentTime();
-      const duration = player.getDuration ? player.getDuration() : 0;
+      seekToTime(currentTime + seconds);
+    }
 
-      let nextTime = currentTime + seconds;
+    function setLoopPoint(handle, seconds) {
+      if (!videoDuration) return;
 
-      if (nextTime < 0) {
-        nextTime = 0;
+      const nextTime = clampTime(seconds);
+
+      if (handle === "start") {
+        loopStart = Math.min(nextTime, Math.max(0, loopEnd - LOOP_GAP_SECONDS));
       }
 
-      if (duration && nextTime > duration) {
-        nextTime = duration;
+      if (handle === "end") {
+        loopEnd = Math.max(nextTime, Math.min(videoDuration, loopStart + LOOP_GAP_SECONDS));
       }
 
-      player.seekTo(nextTime, true);
+      updateTimeControl();
+    }
+
+    function toggleLoop() {
+      isLoopEnabled = !isLoopEnabled;
+      updateLoopButton();
+      setMessage(isLoopEnabled ? "ループを有効にしました" : "ループを解除しました");
+    }
+
+    function resetLoopRange() {
+      loopStart = 0;
+      loopEnd = videoDuration || 0;
+      updateTimeControl();
+      setMessage("ループ範囲をリセットしました");
+    }
+
+    function handleTrackPointerDown(event) {
+      if (!videoDuration) return;
+
+      if (event.target.id === "loopStartHandle") {
+        activeLoopHandle = "start";
+        event.target.setPointerCapture(event.pointerId);
+        event.preventDefault();
+        return;
+      }
+
+      if (event.target.id === "loopEndHandle") {
+        activeLoopHandle = "end";
+        event.target.setPointerCapture(event.pointerId);
+        event.preventDefault();
+        return;
+      }
+
+      isDraggingSeek = true;
+      seekToTime(getTimeFromPointer(event));
+      event.currentTarget.setPointerCapture(event.pointerId);
+      event.preventDefault();
+    }
+
+    function handleTrackPointerMove(event) {
+      if (!videoDuration) return;
+
+      if (activeLoopHandle) {
+        setLoopPoint(activeLoopHandle, getTimeFromPointer(event));
+        event.preventDefault();
+        return;
+      }
+
+      if (isDraggingSeek) {
+        seekToTime(getTimeFromPointer(event));
+        event.preventDefault();
+      }
+    }
+
+    function handleTrackPointerUp() {
+      activeLoopHandle = null;
+      isDraggingSeek = false;
     }
 
     function toggleInvert() {
@@ -409,7 +648,7 @@
       if (!videoId) {
         setMessage(
           "URLパラメータにYouTube動画URLを指定してください<br>" +
-          "例: <code>?v=動画ID</code>" 
+          "例: <code>?v=動画ID</code>"
         );
         return;
       }
@@ -431,6 +670,8 @@
             updateSpeedButton();
             updateSpeedControl();
             updateInvertButton();
+            updateTimeControl();
+            timeTimer = window.setInterval(updateTimeControl, 250);
             setMessage("プレイヤーの準備ができました");
           },
           onPlaybackRateChange: function (event) {
@@ -447,6 +688,22 @@
     document.getElementById("speed2Toggle").addEventListener("click", toggleSpeed2);
 
     document.getElementById("speedRange").addEventListener("input", changeSpeedFromRange);
+
+    document.getElementById("timeTrack").addEventListener("pointerdown", handleTrackPointerDown);
+    document.getElementById("timeTrack").addEventListener("pointermove", handleTrackPointerMove);
+    document.getElementById("timeTrack").addEventListener("pointerup", handleTrackPointerUp);
+    document.getElementById("timeTrack").addEventListener("pointercancel", handleTrackPointerUp);
+    document.getElementById("loopStartHandle").addEventListener("pointerdown", handleTrackPointerDown);
+    document.getElementById("loopStartHandle").addEventListener("pointermove", handleTrackPointerMove);
+    document.getElementById("loopStartHandle").addEventListener("pointerup", handleTrackPointerUp);
+    document.getElementById("loopStartHandle").addEventListener("pointercancel", handleTrackPointerUp);
+    document.getElementById("loopEndHandle").addEventListener("pointerdown", handleTrackPointerDown);
+    document.getElementById("loopEndHandle").addEventListener("pointermove", handleTrackPointerMove);
+    document.getElementById("loopEndHandle").addEventListener("pointerup", handleTrackPointerUp);
+    document.getElementById("loopEndHandle").addEventListener("pointercancel", handleTrackPointerUp);
+
+    document.getElementById("loopToggle").addEventListener("click", toggleLoop);
+    document.getElementById("loopReset").addEventListener("click", resetLoopRange);
 
     document.getElementById("skipForward90").addEventListener("click", function () {
       seekBy(SKIP_90_SECONDS);
@@ -468,6 +725,7 @@
     updateSpeedButton();
     updateSpeedControl();
     updateInvertButton();
+    updateLoopButton();
 
     const tag = document.createElement("script");
     tag.src = "https://www.youtube.com/iframe_api";
