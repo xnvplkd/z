@@ -50,6 +50,34 @@
       flex-wrap: wrap;
     }
 
+    .speed-control {
+      margin-top: 16px;
+      padding: 14px;
+      border: 1px solid #333;
+      border-radius: 12px;
+      background: #181818;
+    }
+
+    .speed-control label {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .speed-control input[type="range"] {
+      width: 100%;
+    }
+
+    .speed-range-meta {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6px;
+      color: #aaa;
+      font-size: 12px;
+    }
+
     .bookmarklet-section {
       margin-top: 40px;
       padding-top: 24px;
@@ -128,6 +156,18 @@
       <button type="button" id="invertToggle">Invert</button>
     </div>
 
+    <div class="speed-control">
+      <label for="speedRange">
+        <span>再生速度</span>
+        <span id="speedValue">1.00x</span>
+      </label>
+      <input type="range" id="speedRange" min="0.25" max="2" step="0.05" value="1">
+      <div class="speed-range-meta" aria-hidden="true">
+        <span>0.25x</span>
+        <span>2.00x</span>
+      </div>
+    </div>
+
     <div class="message" id="message"></div>
 
     <section class="bookmarklet-section" aria-labelledby="bookmarkletTitle">
@@ -147,6 +187,9 @@
   <script>
     const NORMAL_RATE = 1;
     const SPEED_2 = 2;
+    const MIN_RATE = 0.25;
+    const MAX_RATE = 2;
+    const RATE_STEP = 0.05;
     const SKIP_10_SECONDS = 10;
     const SKIP_90_SECONDS = 90;
     const YOUTUBE_NOCOOKIE_HOST = "https://www.youtube-nocookie.com";
@@ -219,6 +262,18 @@
       return player && typeof player.getCurrentTime === "function";
     }
 
+    function formatRate(rate) {
+      return Number(rate).toFixed(2) + "x";
+    }
+
+    function normalizeRate(rate) {
+      const parsedRate = Number(rate);
+      if (!Number.isFinite(parsedRate)) return NORMAL_RATE;
+
+      const clampedRate = Math.min(MAX_RATE, Math.max(MIN_RATE, parsedRate));
+      return Math.round(clampedRate / RATE_STEP) * RATE_STEP;
+    }
+
     function updateMuteButton() {
       const button = document.getElementById("muteToggle");
       button.textContent = isMuted ? "Unmute" : "Mute";
@@ -227,6 +282,15 @@
     function updateSpeedButton() {
       const speed2Button = document.getElementById("speed2Toggle");
       speed2Button.textContent = currentRate === SPEED_2 ? "x1.0" : "x2.0";
+    }
+
+    function updateSpeedControl() {
+      const speedRange = document.getElementById("speedRange");
+      const speedValue = document.getElementById("speedValue");
+      const normalizedRate = normalizeRate(currentRate);
+
+      speedRange.value = String(normalizedRate);
+      speedValue.textContent = formatRate(normalizedRate);
     }
 
     function updateInvertButton() {
@@ -260,20 +324,14 @@
     function setPlaybackRate(rate) {
       if (!player || typeof player.setPlaybackRate !== "function") return;
 
-      const availableRates = player.getAvailablePlaybackRates
-        ? player.getAvailablePlaybackRates()
-        : [];
+      const nextRate = normalizeRate(rate);
 
-      if (availableRates.length > 0 && !availableRates.includes(rate)) {
-        setMessage("この動画では指定した再生速度が利用できない可能性があります");
-        return;
-      }
-
-      player.setPlaybackRate(rate);
-      currentRate = rate;
+      player.setPlaybackRate(nextRate);
+      currentRate = nextRate;
       updateSpeedButton();
+      updateSpeedControl();
 
-      setMessage("再生速度を <code>" + rate + "倍</code> に設定しました");
+      setMessage("再生速度を <code>" + formatRate(nextRate) + "</code> に設定しました");
     }
 
     function toggleSpeed2() {
@@ -287,6 +345,11 @@
       }
 
       setPlaybackRate(SPEED_2);
+    }
+
+    function changeSpeedFromRange() {
+      const speedRange = document.getElementById("speedRange");
+      setPlaybackRate(speedRange.value);
     }
 
     function seekBy(seconds) {
@@ -372,12 +435,14 @@
             setPlaybackRate(NORMAL_RATE);
             updateMuteButton();
             updateSpeedButton();
+            updateSpeedControl();
             updateInvertButton();
             setMessage("プレイヤーの準備ができました");
           },
           onPlaybackRateChange: function (event) {
-            currentRate = event.data;
+            currentRate = normalizeRate(event.data);
             updateSpeedButton();
+            updateSpeedControl();
           }
         }
       });
@@ -386,6 +451,8 @@
     document.getElementById("muteToggle").addEventListener("click", toggleMute);
 
     document.getElementById("speed2Toggle").addEventListener("click", toggleSpeed2);
+
+    document.getElementById("speedRange").addEventListener("input", changeSpeedFromRange);
 
     document.getElementById("skipForward90").addEventListener("click", function () {
       seekBy(SKIP_90_SECONDS);
@@ -405,6 +472,7 @@
 
     updateMuteButton();
     updateSpeedButton();
+    updateSpeedControl();
     updateInvertButton();
 
     const tag = document.createElement("script");
