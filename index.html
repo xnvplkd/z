@@ -12,14 +12,14 @@
     #player { width: 100%; height: 100%; }
     .message { margin-top: 16px; line-height: 1.7; color: #ddd; word-break: break-all; }
     .controls { margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-    .range-pill, .host-switch, .loop-switch { display: inline-flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 999px; background: #222; font-size: 14px; font-weight: 700; user-select: none; }
+    .range-pill, .host-switch, .embed-switch, .loop-switch { display: inline-flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 999px; background: #222; font-size: 14px; font-weight: 700; user-select: none; }
     .range-pill input[type="range"] { width: 110px; }
-    .host-switch, .loop-switch { cursor: pointer; }
-    .host-switch input, .loop-switch input { position: absolute; opacity: 0; pointer-events: none; }
+    .host-switch, .embed-switch, .loop-switch { cursor: pointer; }
+    .host-switch input, .embed-switch input, .loop-switch input { position: absolute; opacity: 0; pointer-events: none; }
     .switch-slider { position: relative; width: 38px; height: 22px; border-radius: 999px; background: #555; }
     .switch-slider::before { content: ""; position: absolute; width: 18px; height: 18px; left: 2px; top: 2px; border-radius: 50%; background: #fff; transition: transform 0.16s ease; }
-    .host-switch input:checked + .switch-slider, .loop-switch input:checked + .switch-slider { background: #fff; }
-    .host-switch input:checked + .switch-slider::before, .loop-switch input:checked + .switch-slider::before { transform: translateX(16px); background: #111; }
+    .host-switch input:checked + .switch-slider, .embed-switch input:checked + .switch-slider, .loop-switch input:checked + .switch-slider { background: #fff; }
+    .host-switch input:checked + .switch-slider::before, .embed-switch input:checked + .switch-slider::before, .loop-switch input:checked + .switch-slider::before { transform: translateX(16px); background: #111; }
     .speed-control, .time-control { margin-top: 16px; padding: 14px; border: 1px solid #333; border-radius: 12px; background: #181818; }
     .speed-control label, .time-label-row { display: flex; justify-content: space-between; gap: 12px; font-weight: 700; margin-bottom: 10px; }
     .speed-control input[type="range"] { width: 100%; }
@@ -55,6 +55,7 @@
       <button type="button" id="invertToggle">Invert</button>
       <label class="range-pill" for="volumeRange"><span>Vol</span><input type="range" id="volumeRange" min="0" max="100" step="1" value="50"></label>
       <label class="host-switch"><span>Std</span><input type="checkbox" id="hostToggle"><span class="switch-slider" aria-hidden="true"></span><span>NoCookie</span></label>
+      <label class="embed-switch"><span>Ctrl</span><input type="checkbox" id="controlsToggle"><span class="switch-slider" aria-hidden="true"></span></label>
     </div>
 
     <div class="time-control">
@@ -101,6 +102,7 @@
     const LOOP_PARAM_START = "loopStart";
     const LOOP_PARAM_END = "loopEnd";
     const HOST_PARAM = "host";
+    const CONTROLS_PARAM = "controls";
     const YOUTUBE_STANDARD_HOST = "https://www.youtube.com";
     const YOUTUBE_NOCOOKIE_HOST = "https://www.youtube-nocookie.com";
     const BOOKMARKLET_CODE = 'javascript:(()=>{const id=new URL(location.href).searchParams.get("v");if(!id){document.title="動画IDが見つかりません";return;}location.href="https://xnvplkd.github.io/z/?v="+encodeURIComponent(id);})();';
@@ -121,16 +123,23 @@
     function getNumberParam(name) { const value = getParam(name); if (value === null || value === "") return null; const number = Number(value); return Number.isFinite(number) ? number : null; }
     function isNoCookieMode() { return getParam(HOST_PARAM) !== "std"; }
     function getYouTubeHost() { return isNoCookieMode() ? YOUTUBE_NOCOOKIE_HOST : YOUTUBE_STANDARD_HOST; }
+    function isEmbedControlsEnabled() { return getParam(CONTROLS_PARAM) === "on"; }
+    function getEmbedControlsValue() { return isEmbedControlsEnabled() ? 1 : 0; }
 
-    function updateHostToggle() {
-      const input = document.getElementById("hostToggle");
-      input.checked = isNoCookieMode();
-    }
+    function updateHostToggle() { document.getElementById("hostToggle").checked = isNoCookieMode(); }
+    function updateControlsToggle() { document.getElementById("controlsToggle").checked = isEmbedControlsEnabled(); }
 
     function changeHostMode() {
       const input = document.getElementById("hostToggle");
       const url = new URL(window.location.href);
       url.searchParams.set(HOST_PARAM, input.checked ? "nocookie" : "std");
+      window.location.href = url.toString();
+    }
+
+    function changeControlsMode() {
+      const input = document.getElementById("controlsToggle");
+      const url = new URL(window.location.href);
+      url.searchParams.set(CONTROLS_PARAM, input.checked ? "on" : "off");
       window.location.href = url.toString();
     }
 
@@ -184,7 +193,7 @@
     function updateSpeedButton() { const speed2Button = document.getElementById("speed2Toggle"); speed2Button.textContent = currentRate === SPEED_2 ? "x1" : "x2"; }
     function updateSpeedControl() { const speedRange = document.getElementById("speedRange"); const speedValue = document.getElementById("speedValue"); const normalizedRate = normalizeRate(currentRate); speedRange.value = String(normalizedRate); speedValue.textContent = formatRate(normalizedRate); }
     function updateInvertButton() { const button = document.getElementById("invertToggle"); button.textContent = isInverted ? "Normal" : "Invert"; }
-    function updateLoopButton() { const input = document.getElementById("loopToggle"); input.checked = isLoopEnabled; }
+    function updateLoopButton() { document.getElementById("loopToggle").checked = isLoopEnabled; }
 
     function updateVolumeControl() {
       if (!player || typeof player.getVolume !== "function") return;
@@ -267,9 +276,9 @@
       if (!videoId) { setMessage("Add a YouTube video ID in the URL<br>Example: <code>?v=videoId</code>"); return; }
       player = new YT.Player("player", {
         width: "100%", height: "100%", videoId: videoId, host: getYouTubeHost(),
-        playerVars: { playsinline: 1, rel: 0, controls: 0, disablekb: 1, fs: 0, iv_load_policy: 3, modestbranding: 1 },
+        playerVars: { playsinline: 1, rel: 0, controls: getEmbedControlsValue(), disablekb: 1, fs: 0, iv_load_policy: 3, modestbranding: 1 },
         events: {
-          onReady: function () { setPlaybackRate(NORMAL_RATE); if (typeof player.setVolume === "function") player.setVolume(Number(document.getElementById("volumeRange").value)); updateVolumeControl(); updateSpeedButton(); updateSpeedControl(); updateInvertButton(); updateHostToggle(); updateTimeControl(); updateVideoTitle(0); timeTimer = window.setInterval(updateTimeControl, 250); setMessage("Ready"); },
+          onReady: function () { setPlaybackRate(NORMAL_RATE); if (typeof player.setVolume === "function") player.setVolume(Number(document.getElementById("volumeRange").value)); updateVolumeControl(); updateSpeedButton(); updateSpeedControl(); updateInvertButton(); updateHostToggle(); updateControlsToggle(); updateTimeControl(); updateVideoTitle(0); timeTimer = window.setInterval(updateTimeControl, 250); setMessage("Ready"); },
           onPlaybackRateChange: function (event) { currentRate = normalizeRate(event.data); updateSpeedButton(); updateSpeedControl(); }
         }
       });
@@ -279,6 +288,7 @@
     document.getElementById("speedRange").addEventListener("input", changeSpeedFromRange);
     document.getElementById("volumeRange").addEventListener("input", setVolumeFromRange);
     document.getElementById("hostToggle").addEventListener("change", changeHostMode);
+    document.getElementById("controlsToggle").addEventListener("change", changeControlsMode);
     document.getElementById("timeTrack").addEventListener("pointerdown", handleTrackPointerDown);
     document.getElementById("timeTrack").addEventListener("pointermove", handleTrackPointerMove);
     document.getElementById("timeTrack").addEventListener("pointerup", handleTrackPointerUp);
@@ -300,7 +310,7 @@
     document.getElementById("skipForward10").addEventListener("click", function () { seekBy(SKIP_10_SECONDS); });
     document.getElementById("invertToggle").addEventListener("click", toggleInvert);
     document.getElementById("copyBookmarklet").addEventListener("click", copyBookmarklet);
-    updateSpeedButton(); updateSpeedControl(); updateInvertButton(); updateLoopButton(); updateHostToggle();
+    updateSpeedButton(); updateSpeedControl(); updateInvertButton(); updateLoopButton(); updateHostToggle(); updateControlsToggle();
     const tag = document.createElement("script"); tag.src = "https://www.youtube.com/iframe_api"; document.head.appendChild(tag);
   </script>
 </body>
