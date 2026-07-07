@@ -9,6 +9,8 @@
     main { max-width: 960px; margin: 0 auto; padding: 24px; }
     .player-wrap { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #000; border-radius: 12px; overflow: hidden; }
     .player-wrap.inverted { filter: invert(1); }
+    .player-wrap:fullscreen { border-radius: 0; }
+    .player-wrap:-webkit-full-screen { border-radius: 0; }
     #player { width: 100%; height: 100%; }
     .message { margin-top: 16px; line-height: 1.7; color: #ddd; word-break: break-all; }
     .controls { margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
@@ -53,6 +55,7 @@
       <button type="button" id="skipBack10">-10</button>
       <button type="button" id="skipForward10">+10</button>
       <button type="button" id="invertToggle">Invert</button>
+      <button type="button" id="fullscreenToggle">Full</button>
       <label class="range-pill" for="volumeRange"><span>Vol</span><input type="range" id="volumeRange" min="0" max="100" step="1" value="50"></label>
       <label class="host-switch"><span>Std</span><input type="checkbox" id="hostToggle"><span class="switch-slider" aria-hidden="true"></span><span>NoCookie</span></label>
       <label class="embed-switch"><span>Ctrl</span><input type="checkbox" id="controlsToggle"><span class="switch-slider" aria-hidden="true"></span></label>
@@ -71,6 +74,7 @@
         <button type="button" id="loopSetStart">Set A</button>
         <button type="button" id="loopSetEnd">Set B</button>
         <label class="loop-switch"><span>Loop</span><input type="checkbox" id="loopToggle"><span class="switch-slider" aria-hidden="true"></span></label>
+        <button type="button" id="loopBackStart">Back A</button>
         <button type="button" id="loopReset">Reset</button>
       </div>
     </div>
@@ -125,9 +129,11 @@
     function getYouTubeHost() { return isNoCookieMode() ? YOUTUBE_NOCOOKIE_HOST : YOUTUBE_STANDARD_HOST; }
     function isEmbedControlsEnabled() { return getParam(CONTROLS_PARAM) === "on"; }
     function getEmbedControlsValue() { return isEmbedControlsEnabled() ? 1 : 0; }
+    function getFullscreenElement() { return document.fullscreenElement || document.webkitFullscreenElement || null; }
 
     function updateHostToggle() { document.getElementById("hostToggle").checked = isNoCookieMode(); }
     function updateControlsToggle() { document.getElementById("controlsToggle").checked = isEmbedControlsEnabled(); }
+    function updateFullscreenButton() { document.getElementById("fullscreenToggle").textContent = getFullscreenElement() ? "Exit" : "Full"; }
 
     function changeHostMode() {
       const input = document.getElementById("hostToggle");
@@ -242,6 +248,7 @@
     function changeSpeedFromRange() { const speedRange = document.getElementById("speedRange"); setPlaybackRate(speedRange.value); }
     function seekToTime(seconds) { if (!isPlayerReady() || !videoDuration) return; player.seekTo(clampTime(seconds), true); updateTimeControl(); }
     function seekBy(seconds) { if (!isPlayerReady()) return; const currentTime = player.getCurrentTime(); seekToTime(currentTime + seconds); }
+    function seekLoopStart() { if (!isPlayerReady() || !videoDuration) return; seekToTime(loopStart); setMessage("Back A <code>" + formatTime(loopStart) + "</code>"); }
 
     function setLoopPoint(handle, seconds) {
       if (!videoDuration) return;
@@ -255,6 +262,19 @@
     function setLoopEndAtCurrentTime() { if (!isPlayerReady() || !videoDuration) return; const currentTime = clampTime(player.getCurrentTime()); loopEnd = currentTime; if (loopEnd <= loopStart) loopStart = Math.max(0, loopEnd - LOOP_GAP_SECONDS); if (loopEnd <= loopStart) loopEnd = Math.min(videoDuration, loopStart + LOOP_GAP_SECONDS); updateLoopParamsInUrl(); updateTimeControl(); setMessage("B <code>" + formatTime(loopEnd) + "</code>"); }
     function toggleLoop() { const input = document.getElementById("loopToggle"); isLoopEnabled = input.checked; updateLoopButton(); setMessage(isLoopEnabled ? "Loop ON" : "Loop OFF"); }
     function resetLoopRange() { loopStart = 0; loopEnd = videoDuration || 0; updateLoopParamsInUrl(); updateTimeControl(); setMessage("Reset loop"); }
+
+    function toggleFullscreen() {
+      const playerWrap = document.getElementById("playerWrap");
+      const fullscreenElement = getFullscreenElement();
+      if (fullscreenElement) {
+        if (document.exitFullscreen) document.exitFullscreen();
+        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        return;
+      }
+      if (playerWrap.requestFullscreen) playerWrap.requestFullscreen();
+      else if (playerWrap.webkitRequestFullscreen) playerWrap.webkitRequestFullscreen();
+      else if (playerWrap.webkitEnterFullscreen) playerWrap.webkitEnterFullscreen();
+    }
 
     function handleTrackPointerDown(event) { if (!videoDuration) return; if (event.target.id === "loopStartHandle") { activeLoopHandle = "start"; event.target.setPointerCapture(event.pointerId); event.preventDefault(); return; } if (event.target.id === "loopEndHandle") { activeLoopHandle = "end"; event.target.setPointerCapture(event.pointerId); event.preventDefault(); return; } isDraggingSeek = true; seekToTime(getTimeFromPointer(event)); event.currentTarget.setPointerCapture(event.pointerId); event.preventDefault(); }
     function handleTrackPointerMove(event) { if (!videoDuration) return; if (activeLoopHandle) { setLoopPoint(activeLoopHandle, getTimeFromPointer(event)); event.preventDefault(); return; } if (isDraggingSeek) { seekToTime(getTimeFromPointer(event)); event.preventDefault(); } }
@@ -278,7 +298,7 @@
         width: "100%", height: "100%", videoId: videoId, host: getYouTubeHost(),
         playerVars: { playsinline: 1, rel: 0, controls: getEmbedControlsValue(), disablekb: 1, fs: 0, iv_load_policy: 3, modestbranding: 1 },
         events: {
-          onReady: function () { setPlaybackRate(NORMAL_RATE); if (typeof player.setVolume === "function") player.setVolume(Number(document.getElementById("volumeRange").value)); updateVolumeControl(); updateSpeedButton(); updateSpeedControl(); updateInvertButton(); updateHostToggle(); updateControlsToggle(); updateTimeControl(); updateVideoTitle(0); timeTimer = window.setInterval(updateTimeControl, 250); setMessage("Ready"); },
+          onReady: function () { setPlaybackRate(NORMAL_RATE); if (typeof player.setVolume === "function") player.setVolume(Number(document.getElementById("volumeRange").value)); updateVolumeControl(); updateSpeedButton(); updateSpeedControl(); updateInvertButton(); updateFullscreenButton(); updateHostToggle(); updateControlsToggle(); updateTimeControl(); updateVideoTitle(0); timeTimer = window.setInterval(updateTimeControl, 250); setMessage("Ready"); },
           onPlaybackRateChange: function (event) { currentRate = normalizeRate(event.data); updateSpeedButton(); updateSpeedControl(); }
         }
       });
@@ -289,6 +309,9 @@
     document.getElementById("volumeRange").addEventListener("input", setVolumeFromRange);
     document.getElementById("hostToggle").addEventListener("change", changeHostMode);
     document.getElementById("controlsToggle").addEventListener("change", changeControlsMode);
+    document.getElementById("fullscreenToggle").addEventListener("click", toggleFullscreen);
+    document.addEventListener("fullscreenchange", updateFullscreenButton);
+    document.addEventListener("webkitfullscreenchange", updateFullscreenButton);
     document.getElementById("timeTrack").addEventListener("pointerdown", handleTrackPointerDown);
     document.getElementById("timeTrack").addEventListener("pointermove", handleTrackPointerMove);
     document.getElementById("timeTrack").addEventListener("pointerup", handleTrackPointerUp);
@@ -304,13 +327,14 @@
     document.getElementById("loopSetStart").addEventListener("click", setLoopStartAtCurrentTime);
     document.getElementById("loopSetEnd").addEventListener("click", setLoopEndAtCurrentTime);
     document.getElementById("loopToggle").addEventListener("change", toggleLoop);
+    document.getElementById("loopBackStart").addEventListener("click", seekLoopStart);
     document.getElementById("loopReset").addEventListener("click", resetLoopRange);
     document.getElementById("skipForward90").addEventListener("click", function () { seekBy(SKIP_90_SECONDS); });
     document.getElementById("skipBack10").addEventListener("click", function () { seekBy(-SKIP_10_SECONDS); });
     document.getElementById("skipForward10").addEventListener("click", function () { seekBy(SKIP_10_SECONDS); });
     document.getElementById("invertToggle").addEventListener("click", toggleInvert);
     document.getElementById("copyBookmarklet").addEventListener("click", copyBookmarklet);
-    updateSpeedButton(); updateSpeedControl(); updateInvertButton(); updateLoopButton(); updateHostToggle(); updateControlsToggle();
+    updateSpeedButton(); updateSpeedControl(); updateInvertButton(); updateFullscreenButton(); updateLoopButton(); updateHostToggle(); updateControlsToggle();
     const tag = document.createElement("script"); tag.src = "https://www.youtube.com/iframe_api"; document.head.appendChild(tag);
   </script>
 </body>
