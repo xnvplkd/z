@@ -25,6 +25,10 @@
     .speed-control, .time-control { margin-top: 16px; padding: 14px; border: 1px solid #333; border-radius: 12px; background: #181818; }
     .speed-control label, .time-label-row { display: flex; justify-content: space-between; gap: 12px; font-weight: 700; margin-bottom: 10px; }
     .speed-control input[type="range"] { width: 100%; }
+    .speed-presets, .speed-stepper { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+    .speed-presets button, .speed-stepper button { min-width: 54px; padding: 9px 12px; }
+    .speed-preset.active { background: #ddd; }
+    .speed-current { min-width: 72px; text-align: center; font-weight: 800; }
     .speed-range-meta, .loop-meta { display: flex; justify-content: space-between; margin-top: 6px; color: #aaa; font-size: 12px; }
     .time-track { position: relative; height: 40px; margin: 10px 8px 0; cursor: pointer; touch-action: none; }
     .time-track::before { content: ""; position: absolute; left: 0; right: 0; top: 16px; height: 8px; border-radius: 999px; background: #333; }
@@ -71,9 +75,9 @@
       </div>
       <div class="loop-meta"><span>Loop</span><span id="loopValue">00:00 - 00:00</span></div>
       <div class="loop-actions">
+        <label class="loop-switch"><span>Loop</span><input type="checkbox" id="loopToggle"><span class="switch-slider" aria-hidden="true"></span></label>
         <button type="button" id="loopSetStart">Set A</button>
         <button type="button" id="loopSetEnd">Set B</button>
-        <label class="loop-switch"><span>Loop</span><input type="checkbox" id="loopToggle"><span class="switch-slider" aria-hidden="true"></span></label>
         <button type="button" id="loopBackStart">Back A</button>
         <button type="button" id="loopReset">Reset</button>
       </div>
@@ -81,6 +85,19 @@
 
     <div class="speed-control">
       <label for="speedRange"><span>Speed</span><span id="speedValue">1.00x</span></label>
+      <div class="speed-presets" aria-label="Speed presets">
+        <button type="button" class="speed-preset" data-rate="0.5">0.5</button>
+        <button type="button" class="speed-preset" data-rate="0.75">0.75</button>
+        <button type="button" class="speed-preset" data-rate="1">1x</button>
+        <button type="button" class="speed-preset" data-rate="1.25">1.25</button>
+        <button type="button" class="speed-preset" data-rate="1.5">1.5</button>
+        <button type="button" class="speed-preset" data-rate="2">2x</button>
+      </div>
+      <div class="speed-stepper" aria-label="Speed fine adjustment">
+        <button type="button" id="speedDown">-</button>
+        <span class="speed-current" id="speedStepValue">1.00x</span>
+        <button type="button" id="speedUp">+</button>
+      </div>
       <input type="range" id="speedRange" min="0.25" max="2" step="0.05" value="1">
       <div class="speed-range-meta" aria-hidden="true"><span>0.25x</span><span>2.00x</span></div>
     </div>
@@ -197,7 +214,18 @@
     function updateLoopParamsInUrl() { if (!videoDuration) return; const url = new URL(window.location.href); url.searchParams.set(LOOP_PARAM_START, loopStart.toFixed(2)); url.searchParams.set(LOOP_PARAM_END, (loopEnd || videoDuration).toFixed(2)); window.history.replaceState(null, "", url); }
     function updateVideoTitle(attempt) { if (!player || typeof player.getVideoData !== "function") return; const data = player.getVideoData(); const title = data && typeof data.title === "string" ? data.title.trim() : ""; if (title) { document.title = title; return; } if (attempt < 10) window.setTimeout(function () { updateVideoTitle(attempt + 1); }, 500); }
     function updateSpeedButton() { const speed2Button = document.getElementById("speed2Toggle"); speed2Button.textContent = currentRate === SPEED_2 ? "x1" : "x2"; }
-    function updateSpeedControl() { const speedRange = document.getElementById("speedRange"); const speedValue = document.getElementById("speedValue"); const normalizedRate = normalizeRate(currentRate); speedRange.value = String(normalizedRate); speedValue.textContent = formatRate(normalizedRate); }
+    function updateSpeedControl() {
+      const speedRange = document.getElementById("speedRange");
+      const speedValue = document.getElementById("speedValue");
+      const speedStepValue = document.getElementById("speedStepValue");
+      const normalizedRate = normalizeRate(currentRate);
+      speedRange.value = String(normalizedRate);
+      speedValue.textContent = formatRate(normalizedRate);
+      speedStepValue.textContent = formatRate(normalizedRate);
+      document.querySelectorAll(".speed-preset").forEach(function (button) {
+        button.classList.toggle("active", normalizeRate(button.dataset.rate) === normalizedRate);
+      });
+    }
     function updateInvertButton() { const button = document.getElementById("invertToggle"); button.textContent = isInverted ? "Normal" : "Invert"; }
     function updateLoopButton() { document.getElementById("loopToggle").checked = isLoopEnabled; }
 
@@ -246,6 +274,8 @@
     function setPlaybackRate(rate) { if (!player || typeof player.setPlaybackRate !== "function") return; const nextRate = normalizeRate(rate); player.setPlaybackRate(nextRate); currentRate = nextRate; updateSpeedButton(); updateSpeedControl(); setMessage("Speed <code>" + formatRate(nextRate) + "</code>"); }
     function toggleSpeed2() { if (!isPlayerReady()) return; player.playVideo(); if (currentRate === SPEED_2) { setPlaybackRate(NORMAL_RATE); return; } setPlaybackRate(SPEED_2); }
     function changeSpeedFromRange() { const speedRange = document.getElementById("speedRange"); setPlaybackRate(speedRange.value); }
+    function changeSpeedFromPreset(event) { setPlaybackRate(event.currentTarget.dataset.rate); }
+    function changeSpeedStep(delta) { setPlaybackRate(currentRate + delta); }
     function seekToTime(seconds) { if (!isPlayerReady() || !videoDuration) return; player.seekTo(clampTime(seconds), true); updateTimeControl(); }
     function seekBy(seconds) { if (!isPlayerReady()) return; const currentTime = player.getCurrentTime(); seekToTime(currentTime + seconds); }
     function seekLoopStart() { if (!isPlayerReady() || !videoDuration) return; seekToTime(loopStart); setMessage("Back A <code>" + formatTime(loopStart) + "</code>"); }
@@ -306,6 +336,9 @@
 
     document.getElementById("speed2Toggle").addEventListener("click", toggleSpeed2);
     document.getElementById("speedRange").addEventListener("input", changeSpeedFromRange);
+    document.getElementById("speedDown").addEventListener("click", function () { changeSpeedStep(-RATE_STEP); });
+    document.getElementById("speedUp").addEventListener("click", function () { changeSpeedStep(RATE_STEP); });
+    document.querySelectorAll(".speed-preset").forEach(function (button) { button.addEventListener("click", changeSpeedFromPreset); });
     document.getElementById("volumeRange").addEventListener("input", setVolumeFromRange);
     document.getElementById("hostToggle").addEventListener("change", changeHostMode);
     document.getElementById("controlsToggle").addEventListener("change", changeControlsMode);
@@ -324,9 +357,9 @@
     document.getElementById("loopEndHandle").addEventListener("pointermove", handleTrackPointerMove);
     document.getElementById("loopEndHandle").addEventListener("pointerup", handleTrackPointerUp);
     document.getElementById("loopEndHandle").addEventListener("pointercancel", handleTrackPointerUp);
+    document.getElementById("loopToggle").addEventListener("change", toggleLoop);
     document.getElementById("loopSetStart").addEventListener("click", setLoopStartAtCurrentTime);
     document.getElementById("loopSetEnd").addEventListener("click", setLoopEndAtCurrentTime);
-    document.getElementById("loopToggle").addEventListener("change", toggleLoop);
     document.getElementById("loopBackStart").addEventListener("click", seekLoopStart);
     document.getElementById("loopReset").addEventListener("click", resetLoopRange);
     document.getElementById("skipForward90").addEventListener("click", function () { seekBy(SKIP_90_SECONDS); });
