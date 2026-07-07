@@ -121,7 +121,7 @@
 
     function getParam(name) { return new URLSearchParams(window.location.search).get(name); }
     function getNumberParam(name) { const value = getParam(name); if (value === null || value === "") return null; const number = Number(value); return Number.isFinite(number) ? number : null; }
-    function isNoCookieMode() { return getParam(HOST_PARAM) !== "std"; }
+    function isNoCookieMode() { return getParam(HOST_PARAM) === "nocookie"; }
     function getYouTubeHost() { return isNoCookieMode() ? YOUTUBE_NOCOOKIE_HOST : YOUTUBE_STANDARD_HOST; }
     function isEmbedControlsEnabled() { return getParam(CONTROLS_PARAM) === "on"; }
     function getEmbedControlsValue() { return isEmbedControlsEnabled() ? 1 : 0; }
