@@ -7,7 +7,8 @@
   <style>
     body { margin: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #111; color: #fff; }
     main { max-width: 960px; margin: 0 auto; padding: 24px; }
-    .player-wrap { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #000; border-radius: 12px; overflow: hidden; }
+    .player-wrap { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #000; overflow: hidden; }
+    body.controls-hidden .player-wrap { aspect-ratio: 1 / 0.85; }
     .player-wrap.inverted { filter: invert(1); }
     .player-wrap:fullscreen, .player-wrap:-webkit-full-screen { border-radius: 0; }
     #player { width: 100%; height: 100%; }
@@ -162,7 +163,7 @@
     }
 
     function updateHostToggle() { document.getElementById("hostToggle").checked = isNoCookieMode(); }
-    function updateControlsToggle() { document.getElementById("controlsToggle").checked = isEmbedControlsEnabled(); }
+    function updateControlsToggle() { const enabled = isEmbedControlsEnabled(); document.getElementById("controlsToggle").checked = enabled; document.body.classList.toggle("controls-hidden", !enabled); }
     function updateFullscreenButton() { document.getElementById("fullscreenToggle").textContent = getFullscreenElement() ? "Exit" : "Full"; }
     function updateInvertButton() { document.getElementById("invertToggle").textContent = isInverted ? "Normal" : "Invert"; }
     function updateLoopButton() { document.getElementById("loopToggle").checked = isLoopEnabled; }
