@@ -222,8 +222,8 @@
     <div class="controls" role="group" aria-label="再生操作">
       <button type="button" id="playerToggle" aria-label="再生">Play</button>
       <button type="button" id="speed2Toggle" aria-label="1倍と2倍を切り替える">x2</button>
-      <button type="button" id="skipBack10">-10</button>
-      <button type="button" id="skipForward10">+10</button>
+      <button type="button" id="skipBack10" title="←キー: 10秒戻る">-10</button>
+      <button type="button" id="skipForward10" title="→キー: 10秒進む">+10</button>
       <button type="button" id="skipForward90">+90</button>
     </div>
 
@@ -571,20 +571,28 @@
     function seekBy(seconds) { if (isPlayerReady()) seekToTime(player.getCurrentTime() + seconds); }
     function seekLoopStart() { if (!isPlayerReady() || !videoDuration) return; seekToTime(loopStart); setMessage("Back A <code>" + formatTime(loopStart) + "</code>"); }
 
-    function isKeyboardShortcutTarget(target) {
+    function isKeyboardShortcutTarget(target, key) {
       if (!(target instanceof Element)) return false;
-      return ["INPUT", "TEXTAREA", "SELECT", "BUTTON"].includes(target.tagName) || target.isContentEditable;
+      // Editing fields keep their ordinary arrow-key behavior.
+      if (target.isContentEditable || target.closest("[contenteditable='true']")) return true;
+      if (["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)) return true;
+      // A/B handles use Left/Right for their existing 0.1-second adjustments.
+      if (target.closest(".loop-handle")) return true;
+      // Space on a focused button must activate that button, not play/pause twice.
+      return key === "Space" && Boolean(target.closest("button, a, [role='button']"));
     }
 
     function handleKeyboardShortcut(event) {
-      if (event.repeat || isKeyboardShortcutTarget(event.target) || !isPlayerReady()) return;
-      if (event.code === "Space") {
+      if (event.repeat || !isPlayerReady() || event.ctrlKey || event.altKey || event.metaKey) return;
+      const key = event.code || (event.key === " " ? "Space" : event.key);
+      if (isKeyboardShortcutTarget(event.target, key)) return;
+      if (key === "Space") {
         event.preventDefault();
         togglePlayback();
-      } else if (event.code === "ArrowLeft") {
+      } else if (key === "ArrowLeft") {
         event.preventDefault();
         seekBy(-SKIP_10_SECONDS);
-      } else if (event.code === "ArrowRight") {
+      } else if (key === "ArrowRight") {
         event.preventDefault();
         seekBy(SKIP_10_SECONDS);
       }
@@ -698,7 +706,7 @@
     document.addEventListener("fullscreenchange", updateFullscreenButton);
     document.addEventListener("webkitfullscreenchange", updateFullscreenButton);
     document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") requestWakeLock(); });
-    document.addEventListener("keydown", handleKeyboardShortcut);
+    document.addEventListener("keydown", handleKeyboardShortcut, true);
     document.addEventListener("pointerdown", requestWakeLock, { once: true });
     document.addEventListener("pointerdown", unlockCountInAudio, { once: true });
     document.addEventListener("touchstart", requestWakeLock, { once: true, passive: true });
