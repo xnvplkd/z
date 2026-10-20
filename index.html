@@ -52,6 +52,17 @@
     .loop-nudge button { min-height: 44px; padding: 8px 4px; border-radius: 9px; background: #424242; color: #fff; font-size: 14px; }
     .loop-actions > button { min-height: 44px; }
     .loop-set-button:focus-visible, .loop-handle:focus-visible, .loop-nudge button:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+    /* Desktop: full-width 16:9 video, compact centered controls. */
+    @media (min-width: 768px) {
+      main { max-width: none; padding: 0; }
+      .player-wrap { width: 100%; aspect-ratio: 16 / 9; }
+      main > :not(.player-wrap) {
+        box-sizing: border-box;
+        width: min(960px, calc(100% - 48px));
+        margin-left: auto;
+        margin-right: auto;
+      }
+    }
     @media (max-width: 600px) {
       main { padding: 12px; }
       .time-control { padding: 12px; }
