@@ -32,7 +32,7 @@
     .time-track::before { content: ""; position: absolute; left: 0; right: 0; top: 46px; height: 4px; border-radius: 999px; background: #333; }
     .time-progress, .loop-range { position: absolute; border-radius: 999px; pointer-events: none; }
     .time-progress { left: 0; top: 46px; height: 4px; width: 0%; background: #777; }
-    .loop-range { left: 0%; top: 44px; height: 8px; width: 100%; background: rgba(255,255,255,.32); }
+    .loop-range { left: 0%; top: 44px; height: 8px; width: 100%; background: #77978c; z-index: 1; }
     .loop-handle { position: absolute; box-sizing: border-box; width: 54px; height: 50px; min-width: 54px; padding: 0; transform: translateX(-50%); border: 2px solid #111; border-radius: 12px; font-size: 19px; font-weight: 800; z-index: 2; box-shadow: 0 2px 8px #0007; user-select: none; touch-action: none; }
     .loop-start { top: 0; left: 0%; background: #476b5b; color: #eef4ee; }
     .loop-end { top: 64px; left: 100%; background: #79634b; color: #f5eee4; }
@@ -298,6 +298,7 @@
     let isLoopEnabled = false;
     let activeLoopHandle = null;
     let isDraggingSeek = false;
+    let activePointerId = null;
     let hasLoadedLoopFromUrl = false;
     let wakeLockSentinel = null;
     let baseBpm = DEFAULT_BPM;
@@ -515,11 +516,26 @@
 
     function setVolumeFromRange() { if (!player?.setVolume) return; const volume = Math.min(100, Math.max(0, Number(document.getElementById("volumeRange").value) || 0)); player.setVolume(volume); volume ? player.unMute?.() : player.mute?.(); setMessage("Vol <code>" + volume + "%</code>"); }
 
+    function renderLoopSelection() {
+      // Update the highlighted A-B segment independently of YouTube playback updates.
+      const start = timeToPercent(loopStart);
+      const end = timeToPercent(loopEnd || videoDuration);
+      const range = document.getElementById("loopRange");
+      range.style.left = start + "%";
+      range.style.width = Math.max(0, end - start) + "%";
+      document.getElementById("loopStartHandle").style.left = start + "%";
+      document.getElementById("loopEndHandle").style.left = end + "%";
+      document.getElementById("loopValue").textContent = formatPreciseTime(loopStart) + " - " + formatPreciseTime(loopEnd || videoDuration);
+      document.getElementById("loopStartValue").textContent = formatPreciseTime(loopStart);
+      document.getElementById("loopEndValue").textContent = formatPreciseTime(loopEnd || videoDuration);
+    }
+
     function updateTimeControl() {
       if (!isPlayerReady()) return;
       const duration = Number(player.getDuration?.()) || 0;
       if (duration > 0) { const old = videoDuration; videoDuration = duration; if (!old || !loopEnd) { loopStart = 0; loopEnd = duration; } loadLoopRangeFromUrl(); }
       const currentTime = clampTime(player.getCurrentTime());
+      renderLoopSelection();
       if (waitingForLoopSeek && currentTime < loopEnd - Math.min(.1, (loopEnd - loopStart) / 2)) waitingForLoopSeek = false;
       const playerState = player.getPlayerState?.();
       if (isLoopEnabled && !countInActive && !waitingForLoopSeek && !activeLoopHandle && !isDraggingSeek &&
@@ -531,13 +547,6 @@
       }
       document.getElementById("timeValue").textContent = formatTime(currentTime) + " / " + formatTime(videoDuration);
       document.getElementById("timeProgress").style.width = timeToPercent(currentTime) + "%";
-      document.getElementById("loopStartHandle").style.left = timeToPercent(loopStart) + "%";
-      document.getElementById("loopEndHandle").style.left = timeToPercent(loopEnd || videoDuration) + "%";
-      document.getElementById("loopRange").style.left = timeToPercent(loopStart) + "%";
-      document.getElementById("loopRange").style.width = Math.max(0, timeToPercent(loopEnd || videoDuration) - timeToPercent(loopStart)) + "%";
-      document.getElementById("loopValue").textContent = formatPreciseTime(loopStart) + " - " + formatPreciseTime(loopEnd || videoDuration);
-      document.getElementById("loopStartValue").textContent = formatPreciseTime(loopStart);
-      document.getElementById("loopEndValue").textContent = formatPreciseTime(loopEnd || videoDuration);
       updateLoopButton();
     }
 
@@ -581,15 +590,16 @@
       }
     }
 
-    function setLoopPoint(handle, seconds, seek = true) {
+    function setLoopPoint(handle, seconds, seek = true, persist = true) {
       if (!videoDuration) return;
       if (countInActive) cancelCountIn(true);
       const next = clampTime(seconds);
       if (handle === "start") loopStart = Math.min(next, Math.max(0, loopEnd - LOOP_GAP_SECONDS));
       else if (handle === "end") loopEnd = Math.max(next, Math.min(videoDuration, loopStart + LOOP_GAP_SECONDS));
-      updateLoopParamsInUrl();
+      // Dragging must move the A/B handles and highlighted bar in the same frame.
+      renderLoopSelection();
+      if (persist) updateLoopParamsInUrl();
       if (seek) seekToTime(handle === "start" ? loopStart : loopEnd);
-      else updateTimeControl();
     }
     function nudgeLoopPoint(handle, delta) {
       if (!isPlayerReady() || !videoDuration) return;
@@ -613,21 +623,41 @@
     function toggleInvert() { isInverted = !isInverted; document.getElementById("playerWrap").classList.toggle("inverted", isInverted); updateInvertButton(); setMessage(isInverted ? "Invert ON" : "Invert OFF"); }
 
     function handleTrackPointerDown(event) {
-      if (!videoDuration) return;
+      if (!videoDuration || activePointerId !== null) return;
       requestWakeLock();
-      if (event.target.id === "loopStartHandle") activeLoopHandle = "start";
-      else if (event.target.id === "loopEndHandle") activeLoopHandle = "end";
-      else { isDraggingSeek = true; seekToTime(getTimeFromPointer(event)); }
-      event.currentTarget.setPointerCapture?.(event.pointerId);
+      const targetId = event.target.closest?.(".loop-handle")?.id || event.target.id;
+      if (targetId === "loopStartHandle") activeLoopHandle = "start";
+      else if (targetId === "loopEndHandle") activeLoopHandle = "end";
+      else isDraggingSeek = true;
+      activePointerId = event.pointerId;
+      if (isDraggingSeek) seekToTime(getTimeFromPointer(event));
+      // Track capture keeps the drag alive if the finger passes outside the A/B button.
+      try { event.currentTarget.setPointerCapture?.(event.pointerId); } catch (_) {}
       event.preventDefault();
     }
-    function handleTrackPointerMove(event) { if (activeLoopHandle) setLoopPoint(activeLoopHandle, getTimeFromPointer(event), false); else if (isDraggingSeek) seekToTime(getTimeFromPointer(event)); }
+    function handleTrackPointerMove(event) {
+      if (activePointerId === null || event.pointerId !== activePointerId) return;
+      if (activeLoopHandle) {
+        setLoopPoint(activeLoopHandle, getTimeFromPointer(event), false, false);
+      } else if (isDraggingSeek) {
+        seekToTime(getTimeFromPointer(event));
+      }
+    }
     function handleTrackPointerUp(event) {
+      if (activePointerId === null || event.pointerId !== activePointerId) return;
       const handle = activeLoopHandle;
+      const isCancel = event.type === "pointercancel";
+      if (handle && !isCancel && Number.isFinite(event.clientX)) {
+        setLoopPoint(handle, getTimeFromPointer(event), false, false);
+      }
+      activePointerId = null;
       activeLoopHandle = null;
       isDraggingSeek = false;
-      if (handle && event.type !== "pointercancel") seekToTime(handle === "start" ? loopStart : loopEnd);
-      else updateTimeControl();
+      if (handle) {
+        updateLoopParamsInUrl();
+        if (!isCancel) seekToTime(handle === "start" ? loopStart : loopEnd);
+        else updateTimeControl();
+      } else updateTimeControl();
     }
 
     function copyBookmarklet() { const code = document.getElementById("bookmarkletCode"); const button = document.getElementById("copyBookmarklet"); const done = () => { button.textContent = "Copied"; setTimeout(() => button.textContent = "Copy", 1600); }; if (navigator.clipboard && isSecureContext) navigator.clipboard.writeText(BOOKMARKLET_CODE).then(done).catch(() => { code.select(); document.execCommand("copy"); done(); }); else { code.select(); document.execCommand("copy"); done(); } }
@@ -676,9 +706,10 @@
 
     const loopTrack = document.getElementById("timeTrack");
     loopTrack.addEventListener("pointerdown", handleTrackPointerDown);
-    loopTrack.addEventListener("pointermove", handleTrackPointerMove);
-    loopTrack.addEventListener("pointerup", handleTrackPointerUp);
-    loopTrack.addEventListener("pointercancel", handleTrackPointerUp);
+    // Listen on document so dragging continues reliably even outside the track.
+    document.addEventListener("pointermove", handleTrackPointerMove);
+    document.addEventListener("pointerup", handleTrackPointerUp);
+    document.addEventListener("pointercancel", handleTrackPointerUp);
     ["loopStartHandle", "loopEndHandle"].forEach(id => {
       document.getElementById(id).addEventListener("keydown", handleLoopHandleKeyDown);
     });
