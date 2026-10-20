@@ -7,7 +7,7 @@
   <style>
     body { margin: 0; font-family: "ＭＳ Ｐゴシック", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #111; color: #fff; }
     main { max-width: 960px; margin: 0 auto; padding: 24px; }
-    .player-wrap { position: relative; width: 100%; aspect-ratio: 1 / 0.85; background: #000; overflow: hidden; }
+    .player-wrap { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #000; overflow: hidden; }
     .player-wrap.inverted { filter: invert(1); }
     .player-wrap:fullscreen, .player-wrap:-webkit-full-screen { border-radius: 0; }
     #player { width: 100%; height: 100%; }
@@ -23,12 +23,11 @@
     .host-switch input:checked + .switch-slider::before, .embed-switch input:checked + .switch-slider::before, .loop-switch input:checked + .switch-slider::before, .countin-switch input:checked + .switch-slider::before { transform: translateX(16px); background: #111; }
     .speed-control, .time-control { margin-top: 16px; padding: 14px; border: 1px solid #333; border-radius: 12px; background: #181818; }
     .speed-control label, .time-label-row { display: flex; justify-content: space-between; gap: 12px; font-weight: 700; margin-bottom: 10px; }
-    .speed-control input[type="range"] { width: 100%; }
     .speed-presets, .speed-stepper { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
     .speed-presets button, .speed-stepper button { min-width: 54px; padding: 9px 12px; }
     .speed-preset.active { background: #ddd; }
     .speed-current { min-width: 72px; text-align: center; font-weight: 800; }
-    .speed-range-meta, .loop-meta { display: flex; justify-content: space-between; margin-top: 6px; color: #aaa; font-size: 12px; }
+    .loop-meta { display: flex; justify-content: space-between; margin-top: 6px; color: #aaa; font-size: 12px; }
     .time-track { position: relative; height: 114px; margin: 12px 28px 0; cursor: pointer; touch-action: none; user-select: none; -webkit-user-select: none; }
     .time-track::before { content: ""; position: absolute; left: 0; right: 0; top: 52px; height: 10px; border-radius: 999px; background: #333; }
     .time-progress, .loop-range { position: absolute; top: 52px; height: 10px; border-radius: 999px; pointer-events: none; }
@@ -55,13 +54,18 @@
     /* Desktop: full-width 16:9 video, compact centered controls. */
     @media (min-width: 768px) {
       main { max-width: none; padding: 0; }
-      .player-wrap { width: 100%; aspect-ratio: 16 / 9; }
+      /* Keep the picture at its natural ratio and create room for YouTube's lower controls. */
+      .player-wrap { width: 100%; aspect-ratio: auto; height: calc(56.25vw + 160px); }
       main > :not(.player-wrap) {
         box-sizing: border-box;
         width: min(960px, calc(100% - 48px));
         margin-left: auto;
         margin-right: auto;
       }
+    }
+    @media (max-width: 767px) {
+      /* Extra height produces letterboxing around 16:9 video, without stretching it. */
+      .player-wrap { aspect-ratio: auto; height: calc(56.25vw + 84px); }
     }
     @media (max-width: 600px) {
       main { padding: 12px; }
@@ -79,6 +83,44 @@
     .bpm-current { font-size: 13px; color: #bbb; }
     .countin-overlay { position: absolute; inset: 0; z-index: 3; pointer-events: none; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,.42); color: #fff; font-size: clamp(40px, 9vw, 90px); font-weight: 800; text-shadow: 0 3px 12px #000; }
     .countin-overlay.visible { display: flex; }
+    /* Compact, readable control surfaces. All frequently used targets remain at least 44px tall. */
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    .time-control, .speed-control { padding: 12px; }
+    .time-control { margin-top: 8px; }
+    .time-track { height: 96px; margin-top: 8px; }
+    .time-track::before, .time-progress, .loop-range { top: 44px; height: 8px; }
+    .loop-handle { min-width: 46px; width: 46px; height: 44px; border-radius: 10px; font-size: 17px; }
+    .loop-end { top: 52px; }
+    .time-control .loop-meta { margin-top: 0; }
+    .loop-points { gap: 8px; margin-top: 8px; }
+    .loop-point-card { padding: 7px; }
+    .loop-set-button { min-height: 62px; padding: 8px 10px; }
+    .loop-set-label { font-size: 13px; }
+    .loop-set-time { font-size: clamp(16px, 4.5vw, 22px); }
+    .loop-nudge { gap: 6px; margin-top: 6px; }
+    .loop-nudge button { min-height: 44px; }
+    .loop-options { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
+    .loop-options .loop-switch, .loop-options .countin-switch { min-height: 44px; box-sizing: border-box; }
+    .loop-options .bpm-current { font-variant-numeric: tabular-nums; }
+    .bpm-control input { min-height: 40px; }
+    .loop-actions { margin-top: 8px; }
+    .loop-actions button { flex: 1; }
+    .controls { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 6px; margin-top: 8px; }
+    .controls button { min-height: 44px; min-width: 0; padding: 8px 4px; }
+    #playerToggle { background: #b9d7ff; }
+    .speed-control { margin-top: 8px; }
+    .speed-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-weight: 700; }
+    .speed-stepper { display: flex; gap: 6px; align-items: center; margin: 0; }
+    .speed-stepper button { min-width: 48px; min-height: 44px; padding: 8px; }
+    .speed-presets { display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); gap: 5px; margin: 8px 0 0; }
+    .speed-presets button { min-width: 0; min-height: 44px; padding: 8px 2px; font-size: 13px; }
+    .speed-preset.active { background: #b9d7ff; color: #111; box-shadow: inset 0 0 0 2px #4c8ce9; }
+    .advanced-settings { margin-top: 8px; padding: 8px 12px; border: 1px solid #333; border-radius: 12px; background: #181818; }
+    .advanced-settings summary { display: list-item; min-height: 28px; line-height: 28px; cursor: pointer; font-weight: 700; }
+    .advanced-settings summary span { color: #aaa; font-size: 12px; font-weight: 400; padding-left: 8px; }
+    .advanced-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
+    .advanced-controls button { min-height: 44px; }
+    .message { margin-top: 8px; font-size: 13px; }
     .bookmarklet-section { margin-top: 40px; padding-top: 24px; border-top: 1px solid #333; }
     .bookmarklet-section h2 { margin: 0 0 12px; font-size: 18px; }
     .bookmarklet-code { display: block; box-sizing: border-box; width: 100%; min-height: 96px; margin-top: 16px; padding: 12px; border: 1px solid #333; border-radius: 10px; background: #222; color: #fff; font: 13px/1.6 ui-monospace, SFMono-Regular, Consolas, monospace; resize: vertical; word-break: break-all; }
@@ -99,13 +141,12 @@
         <button type="button" class="loop-handle loop-start" id="loopStartHandle" aria-label="ループ開始Aを左右に動かす">A</button>
         <button type="button" class="loop-handle loop-end" id="loopEndHandle" aria-label="ループ終了Bを左右に動かす">B</button>
       </div>
-      <div class="loop-meta"><span>A・Bを左右にドラッグして調整</span><span id="loopValue">00:00.0 - 00:00.0</span></div>
+      <div class="loop-meta"><span>A・Bをドラッグして調整</span><span class="sr-only" id="loopValue">00:00.0 - 00:00.0</span></div>
       <div class="loop-points">
         <div class="loop-point-card">
           <button type="button" class="loop-set-button" id="loopSetStart" aria-label="現在の再生位置をAに設定">
-            <span class="loop-set-label">A・開始位置</span>
+            <span class="loop-set-label">A 開始位置を設定</span>
             <span class="loop-set-time" id="loopStartValue">00:00.0</span>
-            <span class="loop-set-hint">タップで現在位置に設定</span>
           </button>
           <div class="loop-nudge" role="group" aria-label="Aの位置を微調整">
             <button type="button" id="loopStartMinus" aria-label="開始位置Aを0.1秒戻す">-0.1秒</button>
@@ -114,9 +155,8 @@
         </div>
         <div class="loop-point-card">
           <button type="button" class="loop-set-button loop-set-end" id="loopSetEnd" aria-label="現在の再生位置をBに設定">
-            <span class="loop-set-label">B・終了位置</span>
+            <span class="loop-set-label">B 終了位置を設定</span>
             <span class="loop-set-time" id="loopEndValue">00:00.0</span>
-            <span class="loop-set-hint">タップで現在位置に設定</span>
           </button>
           <div class="loop-nudge" role="group" aria-label="Bの位置を微調整">
             <button type="button" id="loopEndMinus" aria-label="終了位置Bを0.1秒戻す">-0.1秒</button>
@@ -124,33 +164,36 @@
           </div>
         </div>
       </div>
-      <div class="loop-actions">
+      <div class="loop-options">
         <label class="loop-switch"><span>Loop</span><input type="checkbox" id="loopToggle"><span class="switch-slider" aria-hidden="true"></span></label>
-        <button type="button" id="loopBackStart">Back A</button>
-        <button type="button" id="loopReset">Reset</button>
-      </div>
-      <div class="countin-controls">
         <label class="countin-switch"><span>Count-in</span><input type="checkbox" id="countInToggle" checked><span class="switch-slider" aria-hidden="true"></span></label>
         <label class="bpm-control" for="baseBpm"><span>BPM (1x)</span><input type="number" id="baseBpm" min="40" max="300" step="1" value="120" inputmode="numeric"></label>
         <span class="bpm-current" id="effectiveBpm">Now: 120 BPM</span>
       </div>
+      <div class="loop-actions">
+        <button type="button" id="loopBackStart">Back A</button>
+        <button type="button" id="loopReset">Reset</button>
+      </div>
     </div>
 
-    <div class="controls">
-      <button type="button" id="speed2Toggle">x2</button>
-      <button type="button" id="skipForward90">+90</button>
+    <div class="controls" role="group" aria-label="再生操作">
+      <button type="button" id="playerToggle" aria-label="再生">Play</button>
+      <button type="button" id="speed2Toggle" aria-label="1倍と2倍を切り替える">x2</button>
       <button type="button" id="skipBack10">-10</button>
       <button type="button" id="skipForward10">+10</button>
-      <button type="button" id="invertToggle">Invert</button>
-      <button type="button" id="fullscreenToggle">Full</button>
-      <label class="range-pill" for="volumeRange"><span>Vol</span><input type="range" id="volumeRange" min="0" max="100" step="1" value="50"></label>
-      <label class="host-switch"><span>Std</span><input type="checkbox" id="hostToggle"><span class="switch-slider" aria-hidden="true"></span><span>NoCookie</span></label>
-      <label class="embed-switch"><span>Ctrl</span><input type="checkbox" id="controlsToggle"><span class="switch-slider" aria-hidden="true"></span></label>
+      <button type="button" id="skipForward90">+90</button>
     </div>
 
     <div class="speed-control">
-      <label for="speedRange"><span>Speed</span><span id="speedValue">1.00x</span></label>
-      <div class="speed-presets">
+      <div class="speed-heading">
+        <span>Speed</span>
+        <div class="speed-stepper">
+          <button type="button" id="speedDown" aria-label="再生速度を0.05倍下げる">-</button>
+          <span class="speed-current" id="speedStepValue">1.00x</span>
+          <button type="button" id="speedUp" aria-label="再生速度を0.05倍上げる">+</button>
+        </div>
+      </div>
+      <div class="speed-presets" role="group" aria-label="再生速度プリセット">
         <button type="button" class="speed-preset" data-rate="0.5">0.5</button>
         <button type="button" class="speed-preset" data-rate="0.75">0.75</button>
         <button type="button" class="speed-preset" data-rate="1">1x</button>
@@ -158,14 +201,18 @@
         <button type="button" class="speed-preset" data-rate="1.5">1.5</button>
         <button type="button" class="speed-preset" data-rate="2">2x</button>
       </div>
-      <div class="speed-stepper">
-        <button type="button" id="speedDown">-</button>
-        <span class="speed-current" id="speedStepValue">1.00x</span>
-        <button type="button" id="speedUp">+</button>
-      </div>
-      <input type="range" id="speedRange" min="0.25" max="2" step="0.05" value="1">
-      <div class="speed-range-meta"><span>0.25x</span><span>2.00x</span></div>
     </div>
+
+    <details class="advanced-settings">
+      <summary>その他の設定 <span>音量・画面表示など</span></summary>
+      <div class="advanced-controls">
+        <button type="button" id="invertToggle">Invert</button>
+        <button type="button" id="fullscreenToggle">Full</button>
+        <label class="range-pill" for="volumeRange"><span>Vol</span><input type="range" id="volumeRange" min="0" max="100" step="1" value="50"></label>
+        <label class="host-switch"><span>Std</span><input type="checkbox" id="hostToggle"><span class="switch-slider" aria-hidden="true"></span><span>NoCookie</span></label>
+        <label class="embed-switch"><span>Ctrl (動画内)</span><input type="checkbox" id="controlsToggle"><span class="switch-slider" aria-hidden="true"></span></label>
+      </div>
+    </details>
 
     <div class="message" id="message"></div>
 
@@ -401,8 +448,6 @@
 
     function updateSpeedControl() {
       const rate = normalizeRate(currentRate);
-      document.getElementById("speedRange").value = String(rate);
-      document.getElementById("speedValue").textContent = formatRate(rate);
       document.getElementById("speedStepValue").textContent = formatRate(rate);
       document.querySelectorAll(".speed-preset").forEach(button => button.classList.toggle("active", normalizeRate(button.dataset.rate) === rate));
       updateBpmControl();
@@ -437,6 +482,21 @@
     }
 
     function setPlaybackRate(rate) { if (!player?.setPlaybackRate) return; const oldRate = currentRate; currentRate = normalizeRate(rate); player.setPlaybackRate(currentRate); updateSpeedButton(); updateSpeedControl(); if (countInActive && oldRate !== currentRate) startLoopCountIn(); setMessage("Speed <code>" + formatRate(currentRate) + "</code>"); }
+    function updatePlaybackButton() {
+      const button = document.getElementById("playerToggle");
+      if (!button || !isPlayerReady()) return;
+      const playing = player.getPlayerState?.() === YT.PlayerState.PLAYING;
+      button.textContent = playing ? "Pause" : "Play";
+      button.setAttribute("aria-label", playing ? "一時停止" : "再生");
+    }
+    function togglePlayback() {
+      if (!isPlayerReady()) return;
+      requestWakeLock();
+      if (countInActive) { cancelCountIn(); player.playVideo(); }
+      else if (player.getPlayerState?.() === YT.PlayerState.PLAYING) player.pauseVideo();
+      else player.playVideo();
+      updatePlaybackButton();
+    }
     function toggleSpeed2() { if (!isPlayerReady()) return; requestWakeLock(); if (!countInActive) player.playVideo(); setPlaybackRate(currentRate === SPEED_2 ? NORMAL_RATE : SPEED_2); }
     function seekToTime(seconds) { if (!isPlayerReady() || !videoDuration) return; const wasCounting = countInActive; cancelCountIn(); waitingForLoopSeek = false; player.seekTo(clampTime(seconds), true); if (wasCounting) player.playVideo(); updateTimeControl(); }
     function seekBy(seconds) { if (isPlayerReady()) seekToTime(player.getCurrentTime() + seconds); }
@@ -451,9 +511,7 @@
       if (event.repeat || isKeyboardShortcutTarget(event.target) || !isPlayerReady()) return;
       if (event.code === "Space") {
         event.preventDefault();
-        requestWakeLock();
-        if (countInActive) { cancelCountIn(); player.playVideo(); }
-        else if (player.getPlayerState() === YT.PlayerState.PLAYING) player.pauseVideo(); else player.playVideo();
+        togglePlayback();
       } else if (event.code === "ArrowLeft") {
         event.preventDefault();
         seekBy(-SKIP_10_SECONDS);
@@ -521,7 +579,7 @@
         width: "100%", height: "100%", videoId, host: getYouTubeHost(),
         playerVars: { playsinline: 1, rel: 0, controls: getEmbedControlsValue(), disablekb: 1, fs: 0, iv_load_policy: 3, modestbranding: 1 },
         events: {
-          onReady() { setPlaybackRate(NORMAL_RATE); player.setVolume?.(Number(document.getElementById("volumeRange").value)); updateSpeedButton(); updateSpeedControl(); updateInvertButton(); updateFullscreenButton(); updateHostToggle(); updateControlsToggle(); updateTimeControl(); updateVideoTitle(); setInterval(updateTimeControl, 250); setMessage("Ready"); },
+          onReady() { setPlaybackRate(NORMAL_RATE); player.setVolume?.(Number(document.getElementById("volumeRange").value)); updatePlaybackButton(); updateSpeedButton(); updateSpeedControl(); updateInvertButton(); updateFullscreenButton(); updateHostToggle(); updateControlsToggle(); updateTimeControl(); updateVideoTitle(); setInterval(updateTimeControl, 250); setMessage("Ready"); },
           onStateChange(event) {
             if (event.data === YT.PlayerState.PLAYING) {
               if (countInActive) player.pauseVideo();
@@ -530,14 +588,15 @@
               if (isCountInEnabled) startLoopCountIn();
               else restartLoopImmediately();
             }
+            updatePlaybackButton();
           },
           onPlaybackRateChange(event) { const oldRate = currentRate; currentRate = normalizeRate(event.data); updateSpeedButton(); updateSpeedControl(); if (countInActive && oldRate !== currentRate) startLoopCountIn(); }
         }
       });
     }
 
+    document.getElementById("playerToggle").addEventListener("click", togglePlayback);
     document.getElementById("speed2Toggle").addEventListener("click", toggleSpeed2);
-    document.getElementById("speedRange").addEventListener("input", e => setPlaybackRate(e.currentTarget.value));
     document.getElementById("speedDown").addEventListener("click", () => setPlaybackRate(currentRate - RATE_STEP));
     document.getElementById("speedUp").addEventListener("click", () => setPlaybackRate(currentRate + RATE_STEP));
     document.querySelectorAll(".speed-preset").forEach(button => button.addEventListener("click", () => setPlaybackRate(button.dataset.rate)));
