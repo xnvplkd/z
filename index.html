@@ -13,14 +13,14 @@
     #player { width: 100%; height: 100%; }
     .message { margin-top: 16px; line-height: 1.7; color: #ddd; word-break: break-all; }
     .controls { margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-    .range-pill, .host-switch, .embed-switch, .loop-switch { display: inline-flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 999px; background: #222; font-size: 14px; font-weight: 700; user-select: none; }
+    .range-pill, .host-switch, .embed-switch, .loop-switch, .countin-switch { display: inline-flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 999px; background: #222; font-size: 14px; font-weight: 700; user-select: none; }
     .range-pill input[type="range"] { width: 110px; }
-    .host-switch, .embed-switch, .loop-switch { cursor: pointer; }
-    .host-switch input, .embed-switch input, .loop-switch input { position: absolute; opacity: 0; pointer-events: none; }
+    .host-switch, .embed-switch, .loop-switch, .countin-switch { cursor: pointer; }
+    .host-switch input, .embed-switch input, .loop-switch input, .countin-switch input { position: absolute; opacity: 0; pointer-events: none; }
     .switch-slider { position: relative; width: 38px; height: 22px; border-radius: 999px; background: #555; }
     .switch-slider::before { content: ""; position: absolute; width: 18px; height: 18px; left: 2px; top: 2px; border-radius: 50%; background: #fff; transition: transform .16s ease; }
-    .host-switch input:checked + .switch-slider, .embed-switch input:checked + .switch-slider, .loop-switch input:checked + .switch-slider { background: #fff; }
-    .host-switch input:checked + .switch-slider::before, .embed-switch input:checked + .switch-slider::before, .loop-switch input:checked + .switch-slider::before { transform: translateX(16px); background: #111; }
+    .host-switch input:checked + .switch-slider, .embed-switch input:checked + .switch-slider, .loop-switch input:checked + .switch-slider, .countin-switch input:checked + .switch-slider { background: #fff; }
+    .host-switch input:checked + .switch-slider::before, .embed-switch input:checked + .switch-slider::before, .loop-switch input:checked + .switch-slider::before, .countin-switch input:checked + .switch-slider::before { transform: translateX(16px); background: #111; }
     .speed-control, .time-control { margin-top: 16px; padding: 14px; border: 1px solid #333; border-radius: 12px; background: #181818; }
     .speed-control label, .time-label-row { display: flex; justify-content: space-between; gap: 12px; font-weight: 700; margin-bottom: 10px; }
     .speed-control input[type="range"] { width: 100%; }
@@ -38,6 +38,12 @@
     .loop-start { left: 0%; }
     .loop-end { left: 100%; }
     .loop-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
+    .countin-controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 12px; }
+    .bpm-control { display: inline-flex; gap: 8px; align-items: center; font-size: 14px; font-weight: 700; }
+    .bpm-control input { box-sizing: border-box; width: 76px; padding: 7px 8px; border: 1px solid #555; border-radius: 8px; background: #222; color: #fff; font: inherit; }
+    .bpm-current { font-size: 13px; color: #bbb; }
+    .countin-overlay { position: absolute; inset: 0; z-index: 3; pointer-events: none; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,.42); color: #fff; font-size: clamp(40px, 9vw, 90px); font-weight: 800; text-shadow: 0 3px 12px #000; }
+    .countin-overlay.visible { display: flex; }
     .bookmarklet-section { margin-top: 40px; padding-top: 24px; border-top: 1px solid #333; }
     .bookmarklet-section h2 { margin: 0 0 12px; font-size: 18px; }
     .bookmarklet-code { display: block; box-sizing: border-box; width: 100%; min-height: 96px; margin-top: 16px; padding: 12px; border: 1px solid #333; border-radius: 10px; background: #222; color: #fff; font: 13px/1.6 ui-monospace, SFMono-Regular, Consolas, monospace; resize: vertical; word-break: break-all; }
@@ -48,7 +54,7 @@
 </head>
 <body>
   <main>
-    <div class="player-wrap" id="playerWrap"><div id="player"></div></div>
+    <div class="player-wrap" id="playerWrap"><div id="player"></div><div class="countin-overlay" id="countInOverlay" aria-live="off" aria-hidden="true"></div></div>
 
     <div class="controls">
       <button type="button" id="speed2Toggle">x2</button>
@@ -77,6 +83,11 @@
         <button type="button" id="loopSetEnd">Set B</button>
         <button type="button" id="loopBackStart">Back A</button>
         <button type="button" id="loopReset">Reset</button>
+      </div>
+      <div class="countin-controls">
+        <label class="countin-switch"><span>Count-in</span><input type="checkbox" id="countInToggle" checked><span class="switch-slider" aria-hidden="true"></span></label>
+        <label class="bpm-control" for="baseBpm"><span>BPM (1x)</span><input type="number" id="baseBpm" min="40" max="300" step="1" value="120" inputmode="numeric"></label>
+        <span class="bpm-current" id="effectiveBpm">Now: 120 BPM</span>
       </div>
     </div>
 
@@ -117,6 +128,12 @@
     const SKIP_10_SECONDS = 10;
     const SKIP_90_SECONDS = 90;
     const LOOP_GAP_SECONDS = .5;
+    const COUNT_IN_BEATS = 4;
+    const DEFAULT_BPM = 120;
+    const MIN_BPM = 40;
+    const MAX_BPM = 300;
+    const BPM_STORAGE_KEY = "z.baseBpm";
+    const COUNT_IN_STORAGE_KEY = "z.countInEnabled";
     const LOOP_PARAM_START = "loopStart";
     const LOOP_PARAM_END = "loopEnd";
     const HOST_PARAM = "host";
@@ -136,6 +153,14 @@
     let isDraggingSeek = false;
     let hasLoadedLoopFromUrl = false;
     let wakeLockSentinel = null;
+    let baseBpm = DEFAULT_BPM;
+    let isCountInEnabled = true;
+    let countInActive = false;
+    let countInGeneration = 0;
+    let countInTimeouts = [];
+    let countInOscillators = [];
+    let countInAudioContext = null;
+    let waitingForLoopSeek = false;
 
     function getParam(name) { return new URLSearchParams(location.search).get(name); }
     function getNumberParam(name) { const value = getParam(name); if (value === null || value === "") return null; const number = Number(value); return Number.isFinite(number) ? number : null; }
@@ -148,6 +173,114 @@
     function isPlayerReady() { return player && typeof player.getCurrentTime === "function"; }
     function formatRate(rate) { return Number(rate).toFixed(2) + "x"; }
     function normalizeRate(rate) { const n = Number(rate); if (!Number.isFinite(n)) return NORMAL_RATE; return Math.round(Math.min(MAX_RATE, Math.max(MIN_RATE, n)) / RATE_STEP) * RATE_STEP; }
+    function normalizeBpm(value) { const n = Number(value); return value === "" || value === null || !Number.isFinite(n) ? DEFAULT_BPM : Math.round(Math.max(MIN_BPM, Math.min(MAX_BPM, n))); }
+    function effectiveBpm() { return baseBpm * currentRate; }
+    function updateBpmControl() {
+      document.getElementById("baseBpm").value = String(baseBpm);
+      document.getElementById("countInToggle").checked = isCountInEnabled;
+      document.getElementById("effectiveBpm").textContent = "Now: " + Number(effectiveBpm().toFixed(2)) + " BPM (" + formatRate(currentRate) + ")";
+    }
+    function saveCountInSettings() {
+      try { localStorage.setItem(BPM_STORAGE_KEY, String(baseBpm)); localStorage.setItem(COUNT_IN_STORAGE_KEY, String(isCountInEnabled)); } catch (_) {}
+    }
+    function loadCountInSettings() {
+      try {
+        const savedBpm = localStorage.getItem(BPM_STORAGE_KEY);
+        const savedEnabled = localStorage.getItem(COUNT_IN_STORAGE_KEY);
+        if (savedBpm !== null) baseBpm = normalizeBpm(savedBpm);
+        if (savedEnabled !== null) isCountInEnabled = savedEnabled === "true";
+      } catch (_) {}
+      updateBpmControl();
+    }
+    function unlockCountInAudio() {
+      if (!isCountInEnabled) return;
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        if (!countInAudioContext) countInAudioContext = new AudioContextClass();
+        if (countInAudioContext.state === "suspended") countInAudioContext.resume().catch(() => {});
+      } catch (_) {}
+    }
+    function scheduleCountInClick(at, accented) {
+      if (!countInAudioContext || countInAudioContext.state !== "running") return;
+      const oscillator = countInAudioContext.createOscillator();
+      const gain = countInAudioContext.createGain();
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(accented ? 1200 : 850, at);
+      gain.gain.setValueAtTime(.0001, at);
+      gain.gain.exponentialRampToValueAtTime(accented ? .20 : .13, at + .004);
+      gain.gain.exponentialRampToValueAtTime(.0001, at + .075);
+      oscillator.connect(gain);
+      gain.connect(countInAudioContext.destination);
+      oscillator.start(at);
+      oscillator.stop(at + .08);
+      countInOscillators.push(oscillator);
+    }
+    function cancelCountIn(resumePlayback = false) {
+      if (!countInActive) return;
+      countInActive = false;
+      countInGeneration++;
+      countInTimeouts.forEach(clearTimeout);
+      countInTimeouts = [];
+      countInOscillators.forEach(oscillator => { try { oscillator.stop(); } catch (_) {} });
+      countInOscillators = [];
+      const overlay = document.getElementById("countInOverlay");
+      overlay.classList.remove("visible");
+      overlay.textContent = "";
+      if (resumePlayback && isPlayerReady()) { waitingForLoopSeek = true; player.seekTo(loopStart, true); player.playVideo(); }
+    }
+    function startLoopCountIn() {
+      if (!isPlayerReady() || !isLoopEnabled || !isCountInEnabled) return;
+      cancelCountIn();
+      countInActive = true;
+      const generation = ++countInGeneration;
+      const beatMs = 60000 / effectiveBpm();
+      const overlay = document.getElementById("countInOverlay");
+      overlay.textContent = "Count-in";
+      overlay.classList.add("visible");
+      player.pauseVideo();
+      player.seekTo(loopStart, true);
+      if (countInAudioContext && countInAudioContext.state === "running") {
+        const firstBeatAt = countInAudioContext.currentTime + .02;
+        for (let beat = 0; beat < COUNT_IN_BEATS; beat++) scheduleCountInClick(firstBeatAt + beat * beatMs / 1000, beat === 0);
+      }
+      for (let beat = 0; beat < COUNT_IN_BEATS; beat++) {
+        countInTimeouts.push(setTimeout(() => {
+          if (countInActive && generation === countInGeneration) overlay.textContent = (beat + 1) + " / " + COUNT_IN_BEATS;
+        }, beat * beatMs));
+      }
+      countInTimeouts.push(setTimeout(() => {
+        if (!countInActive || generation !== countInGeneration) return;
+        countInActive = false;
+        countInTimeouts = [];
+        countInOscillators = [];
+        overlay.classList.remove("visible");
+        overlay.textContent = "";
+        waitingForLoopSeek = true;
+        player.seekTo(loopStart, true);
+        player.playVideo();
+      }, COUNT_IN_BEATS * beatMs));
+    }
+    function changeBaseBpm() {
+      baseBpm = normalizeBpm(document.getElementById("baseBpm").value);
+      updateBpmControl();
+      saveCountInSettings();
+      if (countInActive) startLoopCountIn();
+    }
+    function toggleCountIn() {
+      isCountInEnabled = document.getElementById("countInToggle").checked;
+      if (isCountInEnabled) unlockCountInAudio();
+      else cancelCountIn(true);
+      saveCountInSettings();
+      updateBpmControl();
+      setMessage(isCountInEnabled ? "Count-in ON (" + COUNT_IN_BEATS + " beats)" : "Count-in OFF");
+    }
+    function restartLoopImmediately() {
+      if (!isPlayerReady() || waitingForLoopSeek) return;
+      waitingForLoopSeek = true;
+      player.seekTo(loopStart, true);
+      if (player.getPlayerState?.() !== YT.PlayerState.PLAYING) player.playVideo();
+    }
     function formatTime(seconds) { const safe = Math.max(0, Math.floor(Number(seconds) || 0)); const h = Math.floor(safe / 3600); const m = Math.floor((safe % 3600) / 60); const s = safe % 60; return h > 0 ? h + ":" + String(m).padStart(2,"0") + ":" + String(s).padStart(2,"0") : String(m).padStart(2,"0") + ":" + String(s).padStart(2,"0"); }
     function clampTime(seconds) { const n = Number(seconds); if (!Number.isFinite(n)) return 0; return Math.min(videoDuration || 0, Math.max(0, n)); }
     function timeToPercent(seconds) { return videoDuration ? clampTime(seconds) / videoDuration * 100 : 0; }
@@ -207,6 +340,7 @@
       document.getElementById("speedValue").textContent = formatRate(rate);
       document.getElementById("speedStepValue").textContent = formatRate(rate);
       document.querySelectorAll(".speed-preset").forEach(button => button.classList.toggle("active", normalizeRate(button.dataset.rate) === rate));
+      updateBpmControl();
     }
 
     function setVolumeFromRange() { if (!player?.setVolume) return; const volume = Math.min(100, Math.max(0, Number(document.getElementById("volumeRange").value) || 0)); player.setVolume(volume); volume ? player.unMute?.() : player.mute?.(); setMessage("Vol <code>" + volume + "%</code>"); }
@@ -216,7 +350,15 @@
       const duration = Number(player.getDuration?.()) || 0;
       if (duration > 0) { const old = videoDuration; videoDuration = duration; if (!old || !loopEnd) { loopStart = 0; loopEnd = duration; } loadLoopRangeFromUrl(); }
       const currentTime = clampTime(player.getCurrentTime());
-      if (isLoopEnabled && !activeLoopHandle && loopEnd > loopStart && currentTime >= loopEnd) { player.seekTo(loopStart, true); return; }
+      if (waitingForLoopSeek && currentTime < loopEnd - Math.min(.1, (loopEnd - loopStart) / 2)) waitingForLoopSeek = false;
+      const playerState = player.getPlayerState?.();
+      if (isLoopEnabled && !countInActive && !waitingForLoopSeek && !activeLoopHandle && !isDraggingSeek &&
+          loopEnd > loopStart && currentTime >= loopEnd &&
+          (playerState === YT.PlayerState.PLAYING || playerState === YT.PlayerState.ENDED)) {
+        if (isCountInEnabled) startLoopCountIn();
+        else restartLoopImmediately();
+        return;
+      }
       document.getElementById("timeValue").textContent = formatTime(currentTime) + " / " + formatTime(videoDuration);
       document.getElementById("timeProgress").style.width = timeToPercent(currentTime) + "%";
       document.getElementById("loopStartHandle").style.left = timeToPercent(loopStart) + "%";
@@ -227,9 +369,9 @@
       updateLoopButton();
     }
 
-    function setPlaybackRate(rate) { if (!player?.setPlaybackRate) return; currentRate = normalizeRate(rate); player.setPlaybackRate(currentRate); updateSpeedButton(); updateSpeedControl(); setMessage("Speed <code>" + formatRate(currentRate) + "</code>"); }
-    function toggleSpeed2() { if (!isPlayerReady()) return; requestWakeLock(); player.playVideo(); setPlaybackRate(currentRate === SPEED_2 ? NORMAL_RATE : SPEED_2); }
-    function seekToTime(seconds) { if (!isPlayerReady() || !videoDuration) return; player.seekTo(clampTime(seconds), true); updateTimeControl(); }
+    function setPlaybackRate(rate) { if (!player?.setPlaybackRate) return; const oldRate = currentRate; currentRate = normalizeRate(rate); player.setPlaybackRate(currentRate); updateSpeedButton(); updateSpeedControl(); if (countInActive && oldRate !== currentRate) startLoopCountIn(); setMessage("Speed <code>" + formatRate(currentRate) + "</code>"); }
+    function toggleSpeed2() { if (!isPlayerReady()) return; requestWakeLock(); if (!countInActive) player.playVideo(); setPlaybackRate(currentRate === SPEED_2 ? NORMAL_RATE : SPEED_2); }
+    function seekToTime(seconds) { if (!isPlayerReady() || !videoDuration) return; const wasCounting = countInActive; cancelCountIn(); waitingForLoopSeek = false; player.seekTo(clampTime(seconds), true); if (wasCounting) player.playVideo(); updateTimeControl(); }
     function seekBy(seconds) { if (isPlayerReady()) seekToTime(player.getCurrentTime() + seconds); }
     function seekLoopStart() { if (!isPlayerReady() || !videoDuration) return; seekToTime(loopStart); setMessage("Back A <code>" + formatTime(loopStart) + "</code>"); }
 
@@ -243,7 +385,8 @@
       if (event.code === "Space") {
         event.preventDefault();
         requestWakeLock();
-        if (player.getPlayerState() === YT.PlayerState.PLAYING) player.pauseVideo(); else player.playVideo();
+        if (countInActive) { cancelCountIn(); player.playVideo(); }
+        else if (player.getPlayerState() === YT.PlayerState.PLAYING) player.pauseVideo(); else player.playVideo();
       } else if (event.code === "ArrowLeft") {
         event.preventDefault();
         seekBy(-SKIP_10_SECONDS);
@@ -255,6 +398,7 @@
 
     function setLoopPoint(handle, seconds) {
       if (!videoDuration) return;
+      if (countInActive) cancelCountIn(true);
       const next = clampTime(seconds);
       if (handle === "start") loopStart = Math.min(next, Math.max(0, loopEnd - LOOP_GAP_SECONDS));
       else if (handle === "end") loopEnd = Math.max(next, Math.min(videoDuration, loopStart + LOOP_GAP_SECONDS));
@@ -262,10 +406,10 @@
       seekToTime(handle === "start" ? loopStart : loopEnd);
     }
 
-    function setLoopStartAtCurrentTime() { if (!isPlayerReady() || !videoDuration) return; loopStart = clampTime(player.getCurrentTime()); if (loopEnd <= loopStart) loopEnd = Math.min(videoDuration, loopStart + LOOP_GAP_SECONDS); updateLoopParamsInUrl(); updateTimeControl(); setMessage("A <code>" + formatTime(loopStart) + "</code>"); }
-    function setLoopEndAtCurrentTime() { if (!isPlayerReady() || !videoDuration) return; loopEnd = clampTime(player.getCurrentTime()); if (loopEnd <= loopStart) loopStart = Math.max(0, loopEnd - LOOP_GAP_SECONDS); updateLoopParamsInUrl(); updateTimeControl(); setMessage("B <code>" + formatTime(loopEnd) + "</code>"); }
-    function toggleLoop() { isLoopEnabled = document.getElementById("loopToggle").checked; setMessage(isLoopEnabled ? "Loop ON" : "Loop OFF"); }
-    function resetLoopRange() { loopStart = 0; loopEnd = videoDuration || 0; updateLoopParamsInUrl(); updateTimeControl(); setMessage("Reset loop"); }
+    function setLoopStartAtCurrentTime() { if (!isPlayerReady() || !videoDuration) return; if (countInActive) cancelCountIn(true); loopStart = clampTime(player.getCurrentTime()); if (loopEnd <= loopStart) loopEnd = Math.min(videoDuration, loopStart + LOOP_GAP_SECONDS); updateLoopParamsInUrl(); updateTimeControl(); setMessage("A <code>" + formatTime(loopStart) + "</code>"); }
+    function setLoopEndAtCurrentTime() { if (!isPlayerReady() || !videoDuration) return; if (countInActive) cancelCountIn(true); loopEnd = clampTime(player.getCurrentTime()); if (loopEnd <= loopStart) loopStart = Math.max(0, loopEnd - LOOP_GAP_SECONDS); updateLoopParamsInUrl(); updateTimeControl(); setMessage("B <code>" + formatTime(loopEnd) + "</code>"); }
+    function toggleLoop() { isLoopEnabled = document.getElementById("loopToggle").checked; if (isLoopEnabled) unlockCountInAudio(); else { cancelCountIn(true); waitingForLoopSeek = false; } setMessage(isLoopEnabled ? "Loop ON" : "Loop OFF"); }
+    function resetLoopRange() { if (countInActive) cancelCountIn(true); waitingForLoopSeek = false; loopStart = 0; loopEnd = videoDuration || 0; updateLoopParamsInUrl(); updateTimeControl(); setMessage("Reset loop"); }
 
     function toggleFullscreen() { const wrap = document.getElementById("playerWrap"); if (getFullscreenElement()) { (document.exitFullscreen || document.webkitExitFullscreen)?.call(document); return; } (wrap.requestFullscreen || wrap.webkitRequestFullscreen || wrap.webkitEnterFullscreen)?.call(wrap); }
     function toggleInvert() { isInverted = !isInverted; document.getElementById("playerWrap").classList.toggle("inverted", isInverted); updateInvertButton(); setMessage(isInverted ? "Invert ON" : "Invert OFF"); }
@@ -284,8 +428,16 @@
         playerVars: { playsinline: 1, rel: 0, controls: getEmbedControlsValue(), disablekb: 1, fs: 0, iv_load_policy: 3, modestbranding: 1 },
         events: {
           onReady() { setPlaybackRate(NORMAL_RATE); player.setVolume?.(Number(document.getElementById("volumeRange").value)); updateSpeedButton(); updateSpeedControl(); updateInvertButton(); updateFullscreenButton(); updateHostToggle(); updateControlsToggle(); updateTimeControl(); updateVideoTitle(); setInterval(updateTimeControl, 250); setMessage("Ready"); },
-          onStateChange(event) { if (event.data === YT.PlayerState.PLAYING) requestWakeLock(); },
-          onPlaybackRateChange(event) { currentRate = normalizeRate(event.data); updateSpeedButton(); updateSpeedControl(); }
+          onStateChange(event) {
+            if (event.data === YT.PlayerState.PLAYING) {
+              if (countInActive) player.pauseVideo();
+              else requestWakeLock();
+            } else if (event.data === YT.PlayerState.ENDED && isLoopEnabled && !countInActive && !waitingForLoopSeek && loopEnd > loopStart) {
+              if (isCountInEnabled) startLoopCountIn();
+              else restartLoopImmediately();
+            }
+          },
+          onPlaybackRateChange(event) { const oldRate = currentRate; currentRate = normalizeRate(event.data); updateSpeedButton(); updateSpeedControl(); if (countInActive && oldRate !== currentRate) startLoopCountIn(); }
         }
       });
     }
@@ -304,7 +456,9 @@
     document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") requestWakeLock(); });
     document.addEventListener("keydown", handleKeyboardShortcut);
     document.addEventListener("pointerdown", requestWakeLock, { once: true });
+    document.addEventListener("pointerdown", unlockCountInAudio, { once: true });
     document.addEventListener("touchstart", requestWakeLock, { once: true, passive: true });
+    document.addEventListener("touchstart", unlockCountInAudio, { once: true, passive: true });
 
     ["timeTrack", "loopStartHandle", "loopEndHandle"].forEach(id => {
       const element = document.getElementById(id);
@@ -315,6 +469,8 @@
     });
 
     document.getElementById("loopToggle").addEventListener("change", toggleLoop);
+    document.getElementById("countInToggle").addEventListener("change", toggleCountIn);
+    document.getElementById("baseBpm").addEventListener("change", changeBaseBpm);
     document.getElementById("loopSetStart").addEventListener("click", setLoopStartAtCurrentTime);
     document.getElementById("loopSetEnd").addEventListener("click", setLoopEndAtCurrentTime);
     document.getElementById("loopBackStart").addEventListener("click", seekLoopStart);
@@ -325,6 +481,7 @@
     document.getElementById("invertToggle").addEventListener("click", toggleInvert);
     document.getElementById("copyBookmarklet").addEventListener("click", copyBookmarklet);
 
+    loadCountInSettings();
     updateSpeedButton(); updateSpeedControl(); updateInvertButton(); updateFullscreenButton(); updateLoopButton(); updateHostToggle(); updateControlsToggle();
     const tag = document.createElement("script"); tag.src = "https://www.youtube.com/iframe_api"; document.head.appendChild(tag);
   </script>
