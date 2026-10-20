@@ -55,7 +55,7 @@
     @media (min-width: 768px) {
       main { max-width: none; padding: 0; }
       /* Keep the picture at its natural ratio and create room for YouTube's lower controls. */
-      .player-wrap { width: 100%; aspect-ratio: auto; height: calc(56.25vw + 160px); }
+      .player-wrap { width: 100%; aspect-ratio: auto; height: calc(56.25vw + 200px); }
       main > :not(.player-wrap) {
         box-sizing: border-box;
         width: min(960px, calc(100% - 48px));
@@ -65,7 +65,7 @@
     }
     @media (max-width: 767px) {
       /* Extra height produces letterboxing around 16:9 video, without stretching it. */
-      .player-wrap { aspect-ratio: auto; height: calc(56.25vw + 84px); }
+      .player-wrap { aspect-ratio: auto; height: calc(56.25vw + 108px); }
     }
     @media (max-width: 600px) {
       main { padding: 12px; }
