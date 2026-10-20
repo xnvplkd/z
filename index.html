@@ -18,9 +18,9 @@
     .host-switch, .embed-switch, .loop-switch, .countin-switch { cursor: pointer; }
     .host-switch input, .embed-switch input, .loop-switch input, .countin-switch input { position: absolute; opacity: 0; pointer-events: none; }
     .switch-slider { position: relative; width: 38px; height: 22px; border-radius: 999px; background: #555; }
-    .switch-slider::before { content: ""; position: absolute; width: 18px; height: 18px; left: 2px; top: 2px; border-radius: 50%; background: #fff; transition: transform .16s ease; }
-    .host-switch input:checked + .switch-slider, .embed-switch input:checked + .switch-slider, .loop-switch input:checked + .switch-slider, .countin-switch input:checked + .switch-slider { background: #fff; }
-    .host-switch input:checked + .switch-slider::before, .embed-switch input:checked + .switch-slider::before, .loop-switch input:checked + .switch-slider::before, .countin-switch input:checked + .switch-slider::before { transform: translateX(16px); background: #111; }
+    .switch-slider::before { content: ""; position: absolute; width: 18px; height: 18px; left: 2px; top: 2px; border-radius: 50%; background: #e6ebef; transition: transform .16s ease; }
+    .host-switch input:checked + .switch-slider, .embed-switch input:checked + .switch-slider, .loop-switch input:checked + .switch-slider, .countin-switch input:checked + .switch-slider { background: #627b8c; }
+    .host-switch input:checked + .switch-slider::before, .embed-switch input:checked + .switch-slider::before, .countin-switch input:checked + .switch-slider::before { transform: translateX(16px); background: #e6ebef; }
     .speed-control, .time-control { margin-top: 16px; padding: 14px; border: 1px solid #333; border-radius: 12px; background: #181818; }
     .speed-control label, .time-label-row { display: flex; justify-content: space-between; gap: 12px; font-weight: 700; margin-bottom: 10px; }
     .speed-presets, .speed-stepper { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
@@ -34,21 +34,21 @@
     .time-progress { left: 0; width: 0%; background: #777; }
     .loop-range { left: 0%; width: 100%; background: rgba(255,255,255,.32); }
     .loop-handle { position: absolute; box-sizing: border-box; width: 54px; height: 50px; min-width: 54px; padding: 0; transform: translateX(-50%); border: 2px solid #111; border-radius: 12px; font-size: 19px; font-weight: 800; z-index: 2; box-shadow: 0 2px 8px #0007; user-select: none; touch-action: none; }
-    .loop-start { top: 0; left: 0%; background: #91ddb8; color: #14251a; }
-    .loop-end { top: 64px; left: 100%; background: #ffd198; color: #2e1b00; }
+    .loop-start { top: 0; left: 0%; background: #476b5b; color: #eef4ee; }
+    .loop-end { top: 64px; left: 100%; background: #79634b; color: #f5eee4; }
     .loop-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
     .time-control { margin-top: 8px; }
     .time-control .time-label-row { align-items: baseline; }
     .time-control .loop-meta { flex-wrap: wrap; gap: 4px 12px; }
     .loop-points { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }
     .loop-point-card { min-width: 0; padding: 9px; border: 1px solid #444; border-radius: 12px; background: #202020; }
-    .loop-set-button { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 4px; box-sizing: border-box; width: 100%; min-height: 80px; padding: 10px 12px; border: 2px solid #91ddb8; border-radius: 10px; background: #252b27; color: #fff; text-align: left; }
-    .loop-set-button.loop-set-end { border-color: #ffd198; background: #302a22; }
+    .loop-set-button { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 4px; box-sizing: border-box; width: 100%; min-height: 80px; padding: 10px 12px; border: 2px solid #57796c; border-radius: 10px; background: #29362f; color: #e8ede9; text-align: left; }
+    .loop-set-button.loop-set-end { border-color: #8c765f; background: #373229; }
     .loop-set-label { font-size: 14px; font-weight: 700; }
     .loop-set-time { font-size: clamp(17px, 4.8vw, 24px); font-weight: 800; line-height: 1.25; font-variant-numeric: tabular-nums; white-space: nowrap; }
     .loop-set-hint { font-size: 11px; color: #bbb; font-weight: 500; }
     .loop-nudge { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
-    .loop-nudge button { min-height: 44px; padding: 8px 4px; border-radius: 9px; background: #424242; color: #fff; font-size: 14px; }
+    .loop-nudge button { min-height: 44px; padding: 8px 4px; border-radius: 9px; background: #353e46; color: #e8ebef; font-size: 14px; }
     .loop-actions > button { min-height: 44px; }
     .loop-set-button:focus-visible, .loop-handle:focus-visible, .loop-nudge button:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
     /* Desktop: full-width 16:9 video, compact centered controls. */
@@ -79,7 +79,7 @@
     }
     .countin-controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 12px; }
     .bpm-control { display: inline-flex; gap: 8px; align-items: center; font-size: 14px; font-weight: 700; }
-    .bpm-control input { box-sizing: border-box; width: 76px; padding: 7px 8px; border: 1px solid #555; border-radius: 8px; background: #222; color: #fff; font: inherit; }
+    .bpm-control input { box-sizing: border-box; width: 76px; padding: 7px 8px; border: 1px solid #59636b; border-radius: 8px; background: #293139; color: #e9edf0; font: inherit; }
     .bpm-current { font-size: 13px; color: #bbb; }
     .countin-overlay { position: absolute; inset: 0; z-index: 3; pointer-events: none; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,.42); color: #fff; font-size: clamp(40px, 9vw, 90px); font-weight: 800; text-shadow: 0 3px 12px #000; }
     .countin-overlay.visible { display: flex; }
@@ -107,17 +107,17 @@
     .loop-actions button { flex: 1; }
     .controls { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 6px; margin-top: 8px; }
     .controls button { min-height: 44px; min-width: 0; padding: 8px 4px; }
-    #playerToggle { background: #b9d7ff; }
+    #playerToggle { background: #465e6b; border-color: #627988; color: #f0f4f6; }
     .speed-control { margin-top: 8px; }
     .speed-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-weight: 700; }
     .speed-stepper { display: flex; gap: 6px; align-items: center; margin: 0; }
     .speed-stepper button { min-width: 48px; min-height: 44px; padding: 8px; }
     .speed-presets { display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); gap: 5px; margin: 8px 0 0; }
     .speed-presets button { min-width: 0; min-height: 44px; padding: 8px 2px; font-size: 13px; }
-    .speed-preset.active { background: #b9d7ff; color: #111; box-shadow: inset 0 0 0 2px #4c8ce9; }
+    .speed-preset.active { background: #506676; color: #f4f6f8; border-color: #728b9b; box-shadow: inset 0 0 0 1px #728b9b; }
     .advanced-settings { margin-top: 8px; padding: 8px 12px; border: 1px solid #333; border-radius: 12px; background: #181818; }
-    .advanced-settings summary { display: list-item; min-height: 28px; line-height: 28px; cursor: pointer; font-weight: 700; }
-    .advanced-settings summary span { color: #aaa; font-size: 12px; font-weight: 400; padding-left: 8px; }
+    .advanced-heading { min-height: 28px; line-height: 28px; font-weight: 700; }
+    .advanced-heading span { color: #aeb7bf; font-size: 12px; font-weight: 400; padding-left: 8px; }
     .advanced-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
     .advanced-controls button { min-height: 44px; }
     .message { margin-top: 8px; font-size: 13px; }
@@ -125,7 +125,50 @@
     .bookmarklet-section h2 { margin: 0 0 12px; font-size: 18px; }
     .bookmarklet-code { display: block; box-sizing: border-box; width: 100%; min-height: 96px; margin-top: 16px; padding: 12px; border: 1px solid #333; border-radius: 10px; background: #222; color: #fff; font: 13px/1.6 ui-monospace, SFMono-Regular, Consolas, monospace; resize: vertical; word-break: break-all; }
     .bookmarklet-copy-row { margin-top: 12px; }
-    button, .bookmarklet-button { appearance: none; border: 0; border-radius: 999px; padding: 10px 16px; font-size: 14px; cursor: pointer; background: #fff; color: #111; font-weight: 700; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+    button, .bookmarklet-button { appearance: none; border: 1px solid #55616c; border-radius: 999px; padding: 10px 16px; font-size: 14px; cursor: pointer; background: #35414b; color: #edf0f3; font-weight: 700; touch-action: manipulation; -webkit-tap-highlight-color: transparent; transition: background-color .16s ease, border-color .16s ease; }
+    /* Enlarged Loop switch with clearly visible current state. */
+    .loop-options .loop-switch {
+      min-height: 58px;
+      min-width: 174px;
+      padding: 9px 13px;
+      gap: 12px;
+      justify-content: space-between;
+      border: 1px solid #586673;
+      border-radius: 12px;
+      background: #303d47;
+      color: #f0f2f4;
+      font-size: 17px;
+      font-weight: 800;
+      transition: background-color .16s ease, border-color .16s ease;
+    }
+    .loop-options .loop-switch.is-on {
+      background: #3d584e;
+      border-color: #76968a;
+    }
+    .loop-switch-state {
+      min-width: 27px;
+      color: #bcc7ce;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .03em;
+    }
+    .loop-switch.is-on .loop-switch-state { color: #d8e9dd; }
+    .loop-switch .switch-slider { width: 58px; height: 32px; flex: 0 0 58px; background: #56616b; }
+    .loop-switch .switch-slider::before { width: 26px; height: 26px; top: 3px; left: 3px; background: #e6ebef; }
+    .loop-switch input:checked + .switch-slider { background: #648878; }
+    .loop-switch input:checked + .switch-slider::before { transform: translateX(26px); background: #e6ebef; }
+    .loop-switch:focus-within { outline: 2px solid #9bafbd; outline-offset: 2px; }
+    .host-switch:focus-within, .embed-switch:focus-within, .countin-switch:focus-within { outline: 2px solid #9bafbd; outline-offset: 2px; }
+    button:hover { background-color: #45525e; border-color: #72828f; }
+    #playerToggle:hover { background-color: #547080; }
+    .speed-preset.active:hover { background-color: #566f81; }
+    .loop-nudge button:hover { background-color: #47555f; }
+    .loop-set-button:hover { background-color: #36483f; }
+    .loop-set-button.loop-set-end:hover { background-color: #483d32; }
+    button:focus-visible { outline: 2px solid #a9bbc9; outline-offset: 2px; }
+    @media (max-width: 600px) {
+      .loop-options .loop-switch { min-height: 56px; min-width: 174px; }
+    }
     code { background: #222; padding: 2px 6px; border-radius: 6px; }
   </style>
 </head>
@@ -165,7 +208,7 @@
         </div>
       </div>
       <div class="loop-options">
-        <label class="loop-switch"><span>Loop</span><input type="checkbox" id="loopToggle"><span class="switch-slider" aria-hidden="true"></span></label>
+        <label class="loop-switch" id="loopSwitch"><span>Loop</span><span class="loop-switch-state" id="loopStateLabel">OFF</span><input type="checkbox" id="loopToggle" role="switch"><span class="switch-slider" aria-hidden="true"></span></label>
         <label class="countin-switch"><span>Count-in</span><input type="checkbox" id="countInToggle" checked><span class="switch-slider" aria-hidden="true"></span></label>
         <label class="bpm-control" for="baseBpm"><span>BPM (1x)</span><input type="number" id="baseBpm" min="40" max="300" step="1" value="120" inputmode="numeric"></label>
         <span class="bpm-current" id="effectiveBpm">Now: 120 BPM</span>
@@ -203,8 +246,8 @@
       </div>
     </div>
 
-    <details class="advanced-settings">
-      <summary>その他の設定 <span>音量・画面表示など</span></summary>
+    <section class="advanced-settings">
+      <div class="advanced-heading">その他の設定 <span>音量・画面表示など</span></div>
       <div class="advanced-controls">
         <button type="button" id="invertToggle">Invert</button>
         <button type="button" id="fullscreenToggle">Full</button>
@@ -212,7 +255,7 @@
         <label class="host-switch"><span>Std</span><input type="checkbox" id="hostToggle"><span class="switch-slider" aria-hidden="true"></span><span>NoCookie</span></label>
         <label class="embed-switch"><span>Ctrl (動画内)</span><input type="checkbox" id="controlsToggle"><span class="switch-slider" aria-hidden="true"></span></label>
       </div>
-    </details>
+    </section>
 
     <div class="message" id="message"></div>
 
@@ -265,7 +308,20 @@
     let countInOscillators = [];
     let countInAudioContext = null;
     let waitingForLoopSeek = false;
+    let initialCaptionsHandled = false;
 
+    function applyInitialCaptionsOff() {
+      if (initialCaptionsHandled || !player?.getOptions) return;
+      try {
+        const modules = player.getOptions();
+        if (!Array.isArray(modules) || !modules.includes("captions")) return;
+        initialCaptionsHandled = true;
+        // The track and unloadModule operations are best-effort YouTube behavior,
+        // not an officially guaranteed override of viewer caption preferences.
+        try { player.setOption?.("captions", "track", {}); } catch (_) {}
+        try { player.unloadModule?.("captions"); } catch (_) {}
+      } catch (_) {}
+    }
     function getParam(name) { return new URLSearchParams(location.search).get(name); }
     function getNumberParam(name) { const value = getParam(name); if (value === null || value === "") return null; const number = Number(value); return Number.isFinite(number) ? number : null; }
     function isNoCookieMode() { return getParam(HOST_PARAM) === "nocookie"; }
@@ -410,7 +466,11 @@
     function updateControlsToggle() { const enabled = isEmbedControlsEnabled(); document.getElementById("controlsToggle").checked = enabled; document.body.classList.toggle("controls-hidden", !enabled); }
     function updateFullscreenButton() { document.getElementById("fullscreenToggle").textContent = getFullscreenElement() ? "Exit" : "Full"; }
     function updateInvertButton() { document.getElementById("invertToggle").textContent = isInverted ? "Normal" : "Invert"; }
-    function updateLoopButton() { document.getElementById("loopToggle").checked = isLoopEnabled; }
+    function updateLoopButton() {
+      document.getElementById("loopToggle").checked = isLoopEnabled;
+      document.getElementById("loopSwitch").classList.toggle("is-on", isLoopEnabled);
+      document.getElementById("loopStateLabel").textContent = isLoopEnabled ? "ON" : "OFF";
+    }
     function updateSpeedButton() { document.getElementById("speed2Toggle").textContent = currentRate === SPEED_2 ? "x1" : "x2"; }
 
     function changeHostMode() { const url = new URL(location.href); url.searchParams.set(HOST_PARAM, document.getElementById("hostToggle").checked ? "nocookie" : "std"); location.href = url; }
@@ -546,7 +606,7 @@
 
     function setLoopStartAtCurrentTime() { if (!isPlayerReady() || !videoDuration) return; if (countInActive) cancelCountIn(true); loopStart = clampTime(player.getCurrentTime()); if (loopEnd <= loopStart) loopEnd = Math.min(videoDuration, loopStart + LOOP_GAP_SECONDS); updateLoopParamsInUrl(); updateTimeControl(); setMessage("A <code>" + formatTime(loopStart) + "</code>"); }
     function setLoopEndAtCurrentTime() { if (!isPlayerReady() || !videoDuration) return; if (countInActive) cancelCountIn(true); loopEnd = clampTime(player.getCurrentTime()); if (loopEnd <= loopStart) loopStart = Math.max(0, loopEnd - LOOP_GAP_SECONDS); updateLoopParamsInUrl(); updateTimeControl(); setMessage("B <code>" + formatTime(loopEnd) + "</code>"); }
-    function toggleLoop() { isLoopEnabled = document.getElementById("loopToggle").checked; if (isLoopEnabled) unlockCountInAudio(); else { cancelCountIn(true); waitingForLoopSeek = false; } setMessage(isLoopEnabled ? "Loop ON" : "Loop OFF"); }
+    function toggleLoop() { isLoopEnabled = document.getElementById("loopToggle").checked; if (isLoopEnabled) unlockCountInAudio(); else { cancelCountIn(true); waitingForLoopSeek = false; } updateLoopButton(); setMessage(isLoopEnabled ? "Loop ON" : "Loop OFF"); }
     function resetLoopRange() { if (countInActive) cancelCountIn(true); waitingForLoopSeek = false; loopStart = 0; loopEnd = videoDuration || 0; updateLoopParamsInUrl(); updateTimeControl(); setMessage("Reset loop"); }
 
     function toggleFullscreen() { const wrap = document.getElementById("playerWrap"); if (getFullscreenElement()) { (document.exitFullscreen || document.webkitExitFullscreen)?.call(document); return; } (wrap.requestFullscreen || wrap.webkitRequestFullscreen || wrap.webkitEnterFullscreen)?.call(wrap); }
@@ -577,9 +637,9 @@
       if (!videoId) { setMessage("Add a YouTube video ID in the URL<br>Example: <code>?v=videoId</code>"); return; }
       player = new YT.Player("player", {
         width: "100%", height: "100%", videoId, host: getYouTubeHost(),
-        playerVars: { playsinline: 1, rel: 0, controls: getEmbedControlsValue(), disablekb: 1, fs: 0, iv_load_policy: 3, modestbranding: 1 },
+        playerVars: { playsinline: 1, rel: 0, controls: getEmbedControlsValue(), disablekb: 1, fs: 0, iv_load_policy: 3, cc_load_policy: 0, modestbranding: 1 },
         events: {
-          onReady() { setPlaybackRate(NORMAL_RATE); player.setVolume?.(Number(document.getElementById("volumeRange").value)); updatePlaybackButton(); updateSpeedButton(); updateSpeedControl(); updateInvertButton(); updateFullscreenButton(); updateHostToggle(); updateControlsToggle(); updateTimeControl(); updateVideoTitle(); setInterval(updateTimeControl, 250); setMessage("Ready"); },
+          onReady() { applyInitialCaptionsOff(); setPlaybackRate(NORMAL_RATE); player.setVolume?.(Number(document.getElementById("volumeRange").value)); updatePlaybackButton(); updateSpeedButton(); updateSpeedControl(); updateInvertButton(); updateFullscreenButton(); updateHostToggle(); updateControlsToggle(); updateTimeControl(); updateVideoTitle(); setInterval(updateTimeControl, 250); setMessage("Ready"); },
           onStateChange(event) {
             if (event.data === YT.PlayerState.PLAYING) {
               if (countInActive) player.pauseVideo();
@@ -590,7 +650,8 @@
             }
             updatePlaybackButton();
           },
-          onPlaybackRateChange(event) { const oldRate = currentRate; currentRate = normalizeRate(event.data); updateSpeedButton(); updateSpeedControl(); if (countInActive && oldRate !== currentRate) startLoopCountIn(); }
+          onPlaybackRateChange(event) { const oldRate = currentRate; currentRate = normalizeRate(event.data); updateSpeedButton(); updateSpeedControl(); if (countInActive && oldRate !== currentRate) startLoopCountIn(); },
+          onApiChange() { applyInitialCaptionsOff(); }
         }
       });
     }
