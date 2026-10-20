@@ -29,10 +29,10 @@
     .speed-current { min-width: 72px; text-align: center; font-weight: 800; }
     .loop-meta { display: flex; justify-content: space-between; margin-top: 6px; color: #aaa; font-size: 12px; }
     .time-track { position: relative; height: 114px; margin: 12px 28px 0; cursor: pointer; touch-action: none; user-select: none; -webkit-user-select: none; }
-    .time-track::before { content: ""; position: absolute; left: 0; right: 0; top: 52px; height: 10px; border-radius: 999px; background: #333; }
-    .time-progress, .loop-range { position: absolute; top: 52px; height: 10px; border-radius: 999px; pointer-events: none; }
-    .time-progress { left: 0; width: 0%; background: #777; }
-    .loop-range { left: 0%; width: 100%; background: rgba(255,255,255,.32); }
+    .time-track::before { content: ""; position: absolute; left: 0; right: 0; top: 46px; height: 4px; border-radius: 999px; background: #333; }
+    .time-progress, .loop-range { position: absolute; border-radius: 999px; pointer-events: none; }
+    .time-progress { left: 0; top: 46px; height: 4px; width: 0%; background: #777; }
+    .loop-range { left: 0%; top: 44px; height: 8px; width: 100%; background: rgba(255,255,255,.32); }
     .loop-handle { position: absolute; box-sizing: border-box; width: 54px; height: 50px; min-width: 54px; padding: 0; transform: translateX(-50%); border: 2px solid #111; border-radius: 12px; font-size: 19px; font-weight: 800; z-index: 2; box-shadow: 0 2px 8px #0007; user-select: none; touch-action: none; }
     .loop-start { top: 0; left: 0%; background: #476b5b; color: #eef4ee; }
     .loop-end { top: 64px; left: 100%; background: #79634b; color: #f5eee4; }
@@ -88,7 +88,7 @@
     .time-control, .speed-control { padding: 12px; }
     .time-control { margin-top: 8px; }
     .time-track { height: 96px; margin-top: 8px; }
-    .time-track::before, .time-progress, .loop-range { top: 44px; height: 8px; }
+    /* Thin unselected track (4px), highlighted A-B interval (8px), aligned centerline. */
     .loop-handle { min-width: 46px; width: 46px; height: 44px; border-radius: 10px; font-size: 17px; }
     .loop-end { top: 52px; }
     .time-control .loop-meta { margin-top: 0; }
