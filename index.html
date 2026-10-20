@@ -280,6 +280,7 @@
     const MIN_BPM = 40;
     const MAX_BPM = 300;
     const BPM_STORAGE_KEY = "z.baseBpm";
+    const BPM_PARAM = "bpm";
     const COUNT_IN_STORAGE_KEY = "z.countInEnabled";
     const LOOP_PARAM_START = "loopStart";
     const LOOP_PARAM_END = "loopEnd";
@@ -351,6 +352,9 @@
         if (savedBpm !== null) baseBpm = normalizeBpm(savedBpm);
         if (savedEnabled !== null) isCountInEnabled = savedEnabled === "true";
       } catch (_) {}
+      // Explicit URL setting takes priority over this browser's saved BPM.
+      const urlBpm = getNumberParam(BPM_PARAM);
+      if (urlBpm !== null) baseBpm = normalizeBpm(urlBpm);
       updateBpmControl();
     }
     function unlockCountInAudio() {
@@ -426,6 +430,7 @@
       baseBpm = normalizeBpm(document.getElementById("baseBpm").value);
       updateBpmControl();
       saveCountInSettings();
+      updateBpmParamInUrl();
       if (countInActive) startLoopCountIn();
     }
     function toggleCountIn() {
@@ -505,6 +510,11 @@
     }
 
     function updateLoopParamsInUrl() { if (!videoDuration) return; const url = new URL(location.href); url.searchParams.set(LOOP_PARAM_START, loopStart.toFixed(2)); url.searchParams.set(LOOP_PARAM_END, (loopEnd || videoDuration).toFixed(2)); history.replaceState(null, "", url); }
+    function updateBpmParamInUrl() {
+      const url = new URL(location.href);
+      url.searchParams.set(BPM_PARAM, String(baseBpm));
+      history.replaceState(null, "", url);
+    }
     function updateVideoTitle(attempt = 0) { if (!player || typeof player.getVideoData !== "function") return; const title = (player.getVideoData()?.title || "").trim(); if (title) document.title = title; else if (attempt < 10) setTimeout(() => updateVideoTitle(attempt + 1), 500); }
 
     function updateSpeedControl() {
