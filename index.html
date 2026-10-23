@@ -554,7 +554,8 @@
       updateMetroVisualVisibility();
     }
     function metroScheduler() {
-      if (!metroEnabled || countInActive || !countInAudioContext || player?.getPlayerState?.() !== YT.PlayerState.PLAYING) return;
+      // Metronome is independent of YouTube playback and can run while paused.
+      if (!metroEnabled || countInActive || !countInAudioContext || document.hidden) return;
       while (metroNextTime < countInAudioContext.currentTime + METRO_AHEAD_SECONDS) {
         const index = metroNextStep;
         scheduleCountInClick(metroNextTime, index % metroDivision === 0, metroOscillators);
@@ -574,14 +575,14 @@
     }
     async function startMetronome() {
       stopMetronome();
-      if (!metroEnabled || countInActive || !isPlayerReady() || player.getPlayerState?.() !== YT.PlayerState.PLAYING || document.hidden) return;
+      if (!metroEnabled || countInActive || document.hidden) return;
       unlockCountInAudio();
       if (!countInAudioContext) return;
       const generation = ++metroGeneration;
       if (countInAudioContext.state === "suspended") {
         try { await countInAudioContext.resume(); } catch (_) { return; }
       }
-      if (generation !== metroGeneration || !metroEnabled || countInActive || player.getPlayerState?.() !== YT.PlayerState.PLAYING) return;
+      if (generation !== metroGeneration || !metroEnabled || countInActive || document.hidden) return;
       metroNextTime = countInAudioContext.currentTime + .05;
       metroNextStep = 0;
       metroScheduler();
@@ -604,6 +605,8 @@
         player.seekTo(countInTargetTime, true);
         player.playVideo();
       }
+      // If the independent metronome was enabled, restore it after count-in.
+      if (metroEnabled) startMetronome();
       updatePlaybackButton();
     }
     async function startCountIn(targetTime) {
@@ -647,6 +650,7 @@
         waitingForLoopSeek = isLoopEnabled;
         player.seekTo(countInTargetTime, true);
         player.playVideo();
+        if (metroEnabled) startMetronome();
         updatePlaybackButton();
       }, firstDelayMs + COUNT_IN_BEATS * metroDivision * stepMs));
     }
@@ -840,7 +844,6 @@
         player.pauseVideo();
       } else if (player.getPlayerState?.() === YT.PlayerState.PLAYING) {
         player.pauseVideo();
-        stopMetronome();
       } else {
         // Manual Play/Space always starts immediately; the loop boundary owns count-in.
         player.playVideo();
@@ -975,14 +978,12 @@
           onStateChange(event) {
             if (event.data === YT.PlayerState.PLAYING) {
               if (countInActive) player.pauseVideo();
-              else { requestWakeLock(); if (metroEnabled) startMetronome(); }
-            } else {
-              stopMetronome();
-              if (event.data === YT.PlayerState.ENDED && isLoopEnabled && !countInActive && !waitingForLoopSeek && loopEnd > loopStart) {
-                if (isCountInEnabled) startLoopCountIn();
-                else restartLoopImmediately();
-              }
+              else requestWakeLock();
+            } else if (event.data === YT.PlayerState.ENDED && isLoopEnabled && !countInActive && !waitingForLoopSeek && loopEnd > loopStart) {
+              if (isCountInEnabled) startLoopCountIn();
+              else restartLoopImmediately();
             }
+            // PLAYING/PAUSED/ENDED must not otherwise change the metronome.
             updatePlaybackButton();
           },
           onPlaybackRateChange(event) { const oldRate = currentRate; currentRate = normalizeRate(event.data); updateSpeedButton(); updateSpeedControl(); if (oldRate !== currentRate) { if (countInActive) startCountIn(countInTargetTime); else if (metroEnabled) startMetronome(); } },
