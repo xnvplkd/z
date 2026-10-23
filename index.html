@@ -189,6 +189,9 @@
     .metro-bpm button, .metro-division { min-width: 34px; min-height: 36px; padding: 5px 7px; border-radius: 7px; }
     .metro-division.active { background: #526d7e; border-color: #a0b5c3; color: #fff; }
     .metro-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3px; flex: 1 1 132px; max-width: 230px; min-width: 95px; }
+    /* Hide inactive beat boxes. Only an active count-in or running metronome shows the visual. */
+    #metroSteps { display: none; }
+    #metroSteps.is-visible { display: grid; }
     .metro-step { height: 20px; border-radius: 4px; border: 1px solid #667b89; background: #293640; transition: background-color .07s, transform .07s; }
     .metro-step.beat { border: 2px solid #829daa; }
     .metro-step.active { background: #c0e3fa; border-color: #e3f5ff; transform: translateY(-2px); }
@@ -285,7 +288,7 @@
       </div>
       <div class="loop-options">
         <label class="loop-switch" id="loopSwitch"><span>Loop</span><span class="loop-switch-state" id="loopStateLabel">OFF</span><input type="checkbox" id="loopToggle" role="switch"><span class="switch-slider" aria-hidden="true"></span></label>
-        <label class="countin-switch"><span>Count-in</span><input type="checkbox" id="countInToggle" checked><span class="switch-slider" aria-hidden="true"></span></label>
+        <label class="countin-switch"><span>Count-in</span><input type="checkbox" id="countInToggle"><span class="switch-slider" aria-hidden="true"></span></label>
       </div>
       <div class="loop-actions">
         <button type="button" id="loopBackStart">Back A</button>
@@ -370,11 +373,9 @@
     const MAX_BPM = 300;
     const BPM_STORAGE_KEY = "z.baseBpm";
     const BPM_PARAM = "bpm";
-    const COUNT_IN_STORAGE_KEY = "z.countInEnabled";
     const METRO_DIVISION_STORAGE_KEY = "z.metroDivision";
     const METRO_VOLUME_STORAGE_KEY = "z.metroVolume";
     const METRO_SOUND_STORAGE_KEY = "z.metroSoundEnabled";
-    const METRO_ENABLED_STORAGE_KEY = "z.metroEnabled";
     const METRO_LOOKAHEAD_MS = 25;
     const METRO_AHEAD_SECONDS = .12;
     const LOOP_PARAM_START = "loopStart";
@@ -398,7 +399,7 @@
     let hasLoadedLoopFromUrl = false;
     let wakeLockSentinel = null;
     let baseBpm = DEFAULT_BPM;
-    let isCountInEnabled = true;
+    let isCountInEnabled = false;
     let countInActive = false;
     let countInGeneration = 0;
     let countInTimeouts = [];
@@ -470,6 +471,10 @@
       }
     }
     function clearMetroSteps() { showMetroStep(-1); }
+    function updateMetroVisualVisibility() {
+      const running = countInActive || (metroEnabled && metroTimer !== null);
+      document.getElementById("metroSteps").classList.toggle("is-visible", running);
+    }
     function updateMetroControls() {
       document.getElementById("metronomeToggle").checked = metroEnabled;
       document.getElementById("metroSoundToggle").checked = metroSoundEnabled;
@@ -480,31 +485,26 @@
         button.setAttribute("aria-pressed", String(active));
       });
       renderMetroSteps();
+      updateMetroVisualVisibility();
     }
     function saveCountInSettings() {
       try {
         localStorage.setItem(BPM_STORAGE_KEY, String(baseBpm));
-        localStorage.setItem(COUNT_IN_STORAGE_KEY, String(isCountInEnabled));
         localStorage.setItem(METRO_DIVISION_STORAGE_KEY, String(metroDivision));
         localStorage.setItem(METRO_VOLUME_STORAGE_KEY, String(metroVolume));
         localStorage.setItem(METRO_SOUND_STORAGE_KEY, String(metroSoundEnabled));
-        localStorage.setItem(METRO_ENABLED_STORAGE_KEY, String(metroEnabled));
       } catch (_) {}
     }
     function loadCountInSettings() {
       try {
         const savedBpm = localStorage.getItem(BPM_STORAGE_KEY);
-        const savedEnabled = localStorage.getItem(COUNT_IN_STORAGE_KEY);
         const savedDivision = Number(localStorage.getItem(METRO_DIVISION_STORAGE_KEY));
         const savedVolume = localStorage.getItem(METRO_VOLUME_STORAGE_KEY);
         const savedSound = localStorage.getItem(METRO_SOUND_STORAGE_KEY);
-        const savedMetro = localStorage.getItem(METRO_ENABLED_STORAGE_KEY);
         if (savedBpm !== null) baseBpm = normalizeBpm(savedBpm);
-        if (savedEnabled !== null) isCountInEnabled = savedEnabled === "true";
         if ([1, 2, 4].includes(savedDivision)) metroDivision = savedDivision;
         if (savedVolume !== null && Number.isFinite(Number(savedVolume))) metroVolume = Math.round(Math.max(0, Math.min(100, Number(savedVolume))));
         if (savedSound !== null) metroSoundEnabled = savedSound === "true";
-        if (savedMetro !== null) metroEnabled = savedMetro === "true";
       } catch (_) {}
       const urlBpm = getNumberParam(BPM_PARAM);
       if (urlBpm !== null) baseBpm = normalizeBpm(urlBpm);
@@ -551,6 +551,7 @@
       stopScheduledClicks(metroOscillators);
       metroVisualQueue = [];
       if (!countInActive) clearMetroSteps();
+      updateMetroVisualVisibility();
     }
     function metroScheduler() {
       if (!metroEnabled || countInActive || !countInAudioContext || player?.getPlayerState?.() !== YT.PlayerState.PLAYING) return;
@@ -585,6 +586,7 @@
       metroNextStep = 0;
       metroScheduler();
       drawMetroSteps();
+      updateMetroVisualVisibility();
     }
     function cancelCountIn(resumePlayback = false) {
       if (!countInActive) return;
@@ -596,6 +598,7 @@
       const overlay = document.getElementById("countInOverlay");
       overlay.classList.remove("visible");
       clearMetroSteps();
+      updateMetroVisualVisibility();
       if (resumePlayback && isPlayerReady()) {
         waitingForLoopSeek = isLoopEnabled;
         player.seekTo(countInTargetTime, true);
@@ -614,6 +617,7 @@
       const overlay = document.getElementById("countInOverlay");
       clearMetroSteps();
       overlay.classList.add("visible");
+      updateMetroVisualVisibility();
       player.pauseVideo();
       player.seekTo(countInTargetTime, true);
       updatePlaybackButton();
@@ -639,6 +643,7 @@
         countInOscillators = [];
         overlay.classList.remove("visible");
         clearMetroSteps();
+        updateMetroVisualVisibility();
         waitingForLoopSeek = isLoopEnabled;
         player.seekTo(countInTargetTime, true);
         player.playVideo();
