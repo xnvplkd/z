@@ -823,16 +823,17 @@
     }
 
     function handleKeyboardShortcut(event) {
-      if (event.repeat || !isPlayerReady() || event.ctrlKey || event.altKey || event.metaKey) return;
+      if (!isPlayerReady() || event.ctrlKey || event.altKey || event.metaKey) return;
       const key = event.code || (event.key === " " ? "Space" : event.key);
       if (isKeyboardShortcutTarget(event.target, key)) return;
       if (key === "Space") {
+        // Prevent both page scrolling and native focused-button clicks on key repeat.
         event.preventDefault();
-        togglePlayback();
-      } else if (key === "ArrowLeft") {
+        if (!event.repeat) togglePlayback();
+      } else if (!event.repeat && key === "ArrowLeft") {
         event.preventDefault();
         seekBy(-SKIP_10_SECONDS);
-      } else if (key === "ArrowRight") {
+      } else if (!event.repeat && key === "ArrowRight") {
         event.preventDefault();
         seekBy(SKIP_10_SECONDS);
       }
