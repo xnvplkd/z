@@ -569,7 +569,8 @@
       updatePlaybackButton();
     }
     async function startCountIn(targetTime) {
-      if (!isPlayerReady() || !isCountInEnabled) return;
+      // Count-in is reserved for reaching the end of an enabled A-B loop.
+      if (!isPlayerReady() || !isLoopEnabled || !isCountInEnabled) return;
       cancelCountIn();
       stopMetronome();
       countInActive = true;
@@ -799,10 +800,8 @@
       } else if (player.getPlayerState?.() === YT.PlayerState.PLAYING) {
         player.pauseVideo();
         stopMetronome();
-      } else if (isCountInEnabled) {
-        const currentTime = clampTime(player.getCurrentTime());
-        startCountIn(isLoopEnabled && currentTime >= loopEnd ? loopStart : currentTime);
       } else {
+        // Manual Play/Space always starts immediately; the loop boundary owns count-in.
         player.playVideo();
       }
       updatePlaybackButton();
