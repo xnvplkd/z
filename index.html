@@ -816,30 +816,43 @@
     function seekBy(seconds) { if (isPlayerReady()) seekToTime(player.getCurrentTime() + seconds); }
     function seekLoopStart() { if (!isPlayerReady() || !videoDuration) return; seekToTime(loopStart); setMessage("Back A <code>" + formatTime(loopStart) + "</code>"); }
 
-    function isKeyboardShortcutTarget(target, key) {
+    function isKeyboardShortcutTarget(target) {
       if (!(target instanceof Element)) return false;
-      // Editing fields keep their ordinary arrow-key behavior.
+      // Arrow keys still work normally in editors, inputs and loop handles.
       if (target.isContentEditable || target.closest("[contenteditable='true']")) return true;
       if (["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)) return true;
-      // Left/Right on A/B handles still adjusts their positions.
-      // Space controls playback even if a normal button currently has focus.
-      return key !== "Space" && Boolean(target.closest(".loop-handle"));
+      return Boolean(target.closest(".loop-handle"));
+    }
+
+    function isSpaceKey(event) {
+      // Use code and key for compatibility with different keyboard layouts.
+      return event.code === "Space" || event.key === " " || event.key === "Spacebar";
     }
 
     function handleKeyboardShortcut(event) {
-      if (!isPlayerReady() || event.ctrlKey || event.altKey || event.metaKey) return;
-      const key = event.code || (event.key === " " ? "Space" : event.key);
-      if (isKeyboardShortcutTarget(event.target, key)) return;
-      if (key === "Space") {
-        // Prevent both page scrolling and native focused-button clicks on key repeat.
+      if (event.ctrlKey || event.altKey || event.metaKey) return;
+      // Space always controls the video, even when a checkbox or button has focus.
+      // Cancel the native keyboard activation so Loop and other controls stay unchanged.
+      if (isSpaceKey(event)) {
         event.preventDefault();
-        if (!event.repeat) togglePlayback();
-      } else if (!event.repeat && key === "ArrowLeft") {
+        if (!event.repeat && isPlayerReady()) togglePlayback();
+        return;
+      }
+      if (event.repeat || !isPlayerReady() || isKeyboardShortcutTarget(event.target)) return;
+      const key = event.code || event.key;
+      if (key === "ArrowLeft") {
         event.preventDefault();
         seekBy(-SKIP_10_SECONDS);
-      } else if (!event.repeat && key === "ArrowRight") {
+      } else if (key === "ArrowRight") {
         event.preventDefault();
         seekBy(SKIP_10_SECONDS);
+      }
+    }
+
+    function handleKeyboardKeyUp(event) {
+      // Some browsers activate a focused checkbox/button when Space is released.
+      if (!event.ctrlKey && !event.altKey && !event.metaKey && isSpaceKey(event)) {
+        event.preventDefault();
       }
     }
 
@@ -964,6 +977,7 @@
     });
     window.addEventListener("pagehide", () => { stopMetronome(); cancelCountIn(); });
     document.addEventListener("keydown", handleKeyboardShortcut, true);
+    document.addEventListener("keyup", handleKeyboardKeyUp, true);
     document.addEventListener("pointerdown", requestWakeLock, { once: true });
     document.addEventListener("pointerdown", unlockCountInAudio, { once: true });
     document.addEventListener("touchstart", requestWakeLock, { once: true, passive: true });
