@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -209,16 +209,24 @@
     /* All actual buttons have square corners, including loop handles and presets. */
     button, .bookmarklet-button { border-radius: 0 !important; }
     .video-skip-controls { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 8px; }
-    .video-skip-controls button { box-sizing: border-box; flex: 1 1 0; max-width: 180px; min-height: 44px; padding: 8px 14px; font-variant-numeric: tabular-nums; }
+    .video-skip-controls button { box-sizing: border-box; flex: 1 1 0; max-width: 180px; min-width: 0; min-height: 44px; padding: 8px 14px; font-variant-numeric: tabular-nums; }
+    .video-skip-controls .video-volume { flex: 0 1 210px; box-sizing: border-box; min-width: 0; min-height: 44px; justify-content: center; gap: 8px; padding: 6px 10px; border: 1px solid #435360; border-radius: 0; white-space: nowrap; }
+    .video-skip-controls .video-volume input[type="range"] { flex: 1 1 auto; width: 100%; min-width: 55px; accent-color: #92b5cb; }
+    @media (max-width: 600px) {
+      .video-skip-controls { gap: 6px; }
+      .video-skip-controls button { flex: 0 1 82px; padding: 8px 4px; }
+      .video-skip-controls .video-volume { flex: 1 1 130px; gap: 5px; padding: 6px; }
+    }
     .metro-panel { margin-top: 8px; }
   </style>
 </head>
 <body>
   <main>
     <div class="player-wrap" id="playerWrap"><div id="player"></div><div class="countin-overlay" id="countInOverlay" aria-live="off" aria-hidden="true"></div></div>
-    <div class="video-skip-controls" role="group" aria-label="10秒スキップ">
-      <button type="button" id="skipBack10" aria-label="10秒戻る" title="←キー: 10秒戻る">-10秒</button>
-      <button type="button" id="skipForward10" aria-label="10秒進む" title="→キー: 10秒進む">+10秒</button>
+    <div class="video-skip-controls" role="group" aria-label="Video playback controls">
+      <button type="button" id="skipBack10" aria-label="Back 10 seconds" title="Left arrow: back 10 seconds">-10s</button>
+      <button type="button" id="skipForward10" aria-label="Forward 10 seconds" title="Right arrow: forward 10 seconds">+10s</button>
+      <label class="range-pill video-volume" for="volumeRange"><span>Vol</span><input type="range" id="volumeRange" min="0" max="100" step="1" value="50" aria-label="Video volume"></label>
     </div>
 
     <div class="time-control">
@@ -227,29 +235,29 @@
         <div class="time-progress" id="timeProgress"></div>
         <div class="loop-range" id="loopRange"></div>
         <div class="time-playhead" id="timePlayhead" aria-hidden="true"></div>
-        <button type="button" class="loop-handle loop-start" id="loopStartHandle" aria-label="ループ開始Aを左右に動かす">A</button>
-        <button type="button" class="loop-handle loop-end" id="loopEndHandle" aria-label="ループ終了Bを左右に動かす">B</button>
+        <button type="button" class="loop-handle loop-start" id="loopStartHandle" aria-label="Drag to adjust loop start A">A</button>
+        <button type="button" class="loop-handle loop-end" id="loopEndHandle" aria-label="Drag to adjust loop end B">B</button>
       </div>
-      <div class="loop-meta"><span>A・Bをドラッグして調整</span><span class="sr-only" id="loopValue">00:00.0 - 00:00.0</span></div>
+      <div class="loop-meta"><span>Drag A / B to adjust</span><span class="sr-only" id="loopValue">00:00.0 - 00:00.0</span></div>
       <div class="loop-points">
         <div class="loop-point-card">
-          <button type="button" class="loop-set-button" id="loopSetStart" aria-label="現在の再生位置をAに設定">
-            <span class="loop-set-label">A 開始位置を設定</span>
+          <button type="button" class="loop-set-button" id="loopSetStart" aria-label="Set loop start A at current position">
+            <span class="loop-set-label">Set A Start</span>
             <span class="loop-set-time" id="loopStartValue">00:00.0</span>
           </button>
-          <div class="loop-nudge" role="group" aria-label="Aの位置を微調整">
-            <button type="button" id="loopStartMinus" aria-label="開始位置Aを0.1秒戻す">-0.1秒</button>
-            <button type="button" id="loopStartPlus" aria-label="開始位置Aを0.1秒進める">+0.1秒</button>
+          <div class="loop-nudge" role="group" aria-label="Fine-tune loop start A">
+            <button type="button" id="loopStartMinus" aria-label="Move A back 0.1 seconds">-0.1s</button>
+            <button type="button" id="loopStartPlus" aria-label="Move A forward 0.1 seconds">+0.1s</button>
           </div>
         </div>
         <div class="loop-point-card">
-          <button type="button" class="loop-set-button loop-set-end" id="loopSetEnd" aria-label="現在の再生位置をBに設定">
-            <span class="loop-set-label">B 終了位置を設定</span>
+          <button type="button" class="loop-set-button loop-set-end" id="loopSetEnd" aria-label="Set loop end B at current position">
+            <span class="loop-set-label">Set B End</span>
             <span class="loop-set-time" id="loopEndValue">00:00.0</span>
           </button>
-          <div class="loop-nudge" role="group" aria-label="Bの位置を微調整">
-            <button type="button" id="loopEndMinus" aria-label="終了位置Bを0.1秒戻す">-0.1秒</button>
-            <button type="button" id="loopEndPlus" aria-label="終了位置Bを0.1秒進める">+0.1秒</button>
+          <div class="loop-nudge" role="group" aria-label="Fine-tune loop end B">
+            <button type="button" id="loopEndMinus" aria-label="Move B back 0.1 seconds">-0.1s</button>
+            <button type="button" id="loopEndPlus" aria-label="Move B forward 0.1 seconds">+0.1s</button>
           </div>
         </div>
       </div>
@@ -263,27 +271,27 @@
       </div>
     </div>
 
-    <section class="metro-panel" aria-label="カウントインとメトロノーム">
+    <section class="metro-panel" aria-label="Count-in and metronome">
       <div class="metro-top">
-        <div class="metro-bpm" role="group" aria-label="基準BPM">
+        <div class="metro-bpm" role="group" aria-label="Base BPM">
           <span>BPM</span>
-          <button type="button" id="bpmMinus" aria-label="BPMを1下げる">-</button>
-          <input type="number" id="baseBpm" min="40" max="300" step="1" value="120" inputmode="numeric" aria-label="基準BPM">
-          <button type="button" id="bpmPlus" aria-label="BPMを1上げる">+</button>
+          <button type="button" id="bpmMinus" aria-label="Decrease BPM by one">-</button>
+          <input type="number" id="baseBpm" min="40" max="300" step="1" value="120" inputmode="numeric" aria-label="Base BPM">
+          <button type="button" id="bpmPlus" aria-label="Increase BPM by one">+</button>
         </div>
         <span class="bpm-current" id="effectiveBpm">Now: 120 BPM</span>
-        <div id="metroSteps" class="metro-steps" aria-label="4拍のメトロノーム表示"></div>
+        <div id="metroSteps" class="metro-steps" aria-label="Four-beat metronome display"></div>
       </div>
       <div class="metro-bottom">
         <label class="metro-option"><input type="checkbox" id="metronomeToggle"><span>Metronome</span></label>
         <label class="metro-option"><input type="checkbox" id="metroSoundToggle" checked><span>Sound</span></label>
-        <div class="metro-division-group" role="group" aria-label="1拍の分割数">
+        <div class="metro-division-group" role="group" aria-label="Subdivisions per beat">
           <span>Subdivision</span>
           <button type="button" class="metro-division active" data-division="1" aria-pressed="true">1</button>
           <button type="button" class="metro-division" data-division="2" aria-pressed="false">2</button>
           <button type="button" class="metro-division" data-division="4" aria-pressed="false">4</button>
         </div>
-        <label class="metro-volume">Click Vol <input type="range" id="metroVolume" min="0" max="100" value="65" aria-label="メトロノーム音量"></label>
+        <label class="metro-volume">Click Vol <input type="range" id="metroVolume" min="0" max="100" value="65" aria-label="Metronome volume"></label>
       </div>
     </section>
 
@@ -291,12 +299,12 @@
       <div class="speed-heading">
         <span>Speed</span>
         <div class="speed-stepper">
-          <button type="button" id="speedDown" aria-label="再生速度を0.05倍下げる">-</button>
+          <button type="button" id="speedDown" aria-label="Decrease playback speed by 0.05x">-</button>
           <span class="speed-current" id="speedStepValue">1.00x</span>
-          <button type="button" id="speedUp" aria-label="再生速度を0.05倍上げる">+</button>
+          <button type="button" id="speedUp" aria-label="Increase playback speed by 0.05x">+</button>
         </div>
       </div>
-      <div class="speed-presets" role="group" aria-label="再生速度プリセット">
+      <div class="speed-presets" role="group" aria-label="Playback speed presets">
         <button type="button" class="speed-preset" data-rate="0.5">0.5</button>
         <button type="button" class="speed-preset" data-rate="0.75">0.75</button>
         <button type="button" class="speed-preset" data-rate="1">1x</button>
@@ -307,13 +315,12 @@
     </div>
 
     <section class="advanced-settings">
-      <div class="advanced-heading">その他の設定 <span>音量・画面表示など</span></div>
+      <div class="advanced-heading">Other Settings <span>Display and player options</span></div>
       <div class="advanced-controls">
         <button type="button" id="invertToggle">Invert</button>
         <button type="button" id="fullscreenToggle">Full</button>
-        <label class="range-pill" for="volumeRange"><span>Vol</span><input type="range" id="volumeRange" min="0" max="100" step="1" value="50"></label>
         <label class="host-switch"><span>Std</span><input type="checkbox" id="hostToggle"><span class="switch-slider" aria-hidden="true"></span><span>NoCookie</span></label>
-        <label class="embed-switch"><span>Ctrl (動画内)</span><input type="checkbox" id="controlsToggle"><span class="switch-slider" aria-hidden="true"></span></label>
+        <label class="embed-switch"><span>Video Ctrl</span><input type="checkbox" id="controlsToggle"><span class="switch-slider" aria-hidden="true"></span></label>
       </div>
     </section>
 
@@ -321,7 +328,7 @@
 
     <section class="bookmarklet-section">
       <h2>Bookmarklet</h2>
-      <textarea class="bookmarklet-code" id="bookmarkletCode" readonly>javascript:(()=>{const id=new URL(location.href).searchParams.get("v");if(!id){document.title="動画IDが見つかりません";return;}location.href="https://xnvplkd.github.io/z/?v="+encodeURIComponent(id);})();</textarea>
+      <textarea class="bookmarklet-code" id="bookmarkletCode" readonly>javascript:(()=>{const id=new URL(location.href).searchParams.get("v");if(!id){document.title="Video ID not found";return;}location.href="https://xnvplkd.github.io/z/?v="+encodeURIComponent(id);})();</textarea>
       <div class="bookmarklet-copy-row"><button type="button" id="copyBookmarklet">Copy</button></div>
     </section>
   </main>
@@ -354,7 +361,7 @@
     const CONTROLS_PARAM = "controls";
     const YOUTUBE_STANDARD_HOST = "https://www.youtube.com";
     const YOUTUBE_NOCOOKIE_HOST = "https://www.youtube-nocookie.com";
-    const BOOKMARKLET_CODE = 'javascript:(()=>{const id=new URL(location.href).searchParams.get("v");if(!id){document.title="動画IDが見つかりません";return;}location.href="https://xnvplkd.github.io/z/?v="+encodeURIComponent(id);})();';
+    const BOOKMARKLET_CODE = 'javascript:(()=>{const id=new URL(location.href).searchParams.get("v");if(!id){document.title="Video ID not found";return;}location.href="https://xnvplkd.github.io/z/?v="+encodeURIComponent(id);})();';
 
     let player = null;
     let currentRate = NORMAL_RATE;
@@ -794,7 +801,7 @@
       if (!button || !isPlayerReady()) return;
       const playing = player.getPlayerState?.() === YT.PlayerState.PLAYING;
       button.textContent = countInActive ? "Stop" : playing ? "Pause" : "Play";
-      button.setAttribute("aria-label", countInActive ? "カウントインを停止" : playing ? "一時停止" : "再生");
+      button.setAttribute("aria-label", countInActive ? "Stop count-in" : playing ? "Pause" : "Play");
     }
     function togglePlayback() {
       if (!isPlayerReady()) return;
