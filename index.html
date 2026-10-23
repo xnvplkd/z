@@ -206,11 +206,20 @@
       .metro-division-group > span { display: none; }
       .metro-bottom { gap: 5px 8px; }
     }
+    /* All actual buttons have square corners, including loop handles and presets. */
+    button, .bookmarklet-button { border-radius: 0 !important; }
+    .video-skip-controls { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 8px; }
+    .video-skip-controls button { box-sizing: border-box; flex: 1 1 0; max-width: 180px; min-height: 44px; padding: 8px 14px; font-variant-numeric: tabular-nums; }
+    .metro-panel { margin-top: 8px; }
   </style>
 </head>
 <body>
   <main>
     <div class="player-wrap" id="playerWrap"><div id="player"></div><div class="countin-overlay" id="countInOverlay" aria-live="off" aria-hidden="true"></div></div>
+    <div class="video-skip-controls" role="group" aria-label="10秒スキップ">
+      <button type="button" id="skipBack10" aria-label="10秒戻る" title="←キー: 10秒戻る">-10秒</button>
+      <button type="button" id="skipForward10" aria-label="10秒進む" title="→キー: 10秒進む">+10秒</button>
+    </div>
 
     <div class="time-control">
       <div class="time-label-row"><span>Loop A - B</span><span id="timeValue">00:00 / 00:00</span></div>
@@ -248,42 +257,35 @@
         <label class="loop-switch" id="loopSwitch"><span>Loop</span><span class="loop-switch-state" id="loopStateLabel">OFF</span><input type="checkbox" id="loopToggle" role="switch"><span class="switch-slider" aria-hidden="true"></span></label>
         <label class="countin-switch"><span>Count-in</span><input type="checkbox" id="countInToggle" checked><span class="switch-slider" aria-hidden="true"></span></label>
       </div>
-      <section class="metro-panel" aria-label="カウントインとメトロノーム">
-        <div class="metro-top">
-          <div class="metro-bpm" role="group" aria-label="基準BPM">
-            <span>BPM</span>
-            <button type="button" id="bpmMinus" aria-label="BPMを1下げる">-</button>
-            <input type="number" id="baseBpm" min="40" max="300" step="1" value="120" inputmode="numeric" aria-label="基準BPM">
-            <button type="button" id="bpmPlus" aria-label="BPMを1上げる">+</button>
-          </div>
-          <span class="bpm-current" id="effectiveBpm">Now: 120 BPM</span>
-          <div id="metroSteps" class="metro-steps" aria-label="4拍のメトロノーム表示"></div>
-        </div>
-        <div class="metro-bottom">
-          <label class="metro-option"><input type="checkbox" id="metronomeToggle"><span>Metronome</span></label>
-          <label class="metro-option"><input type="checkbox" id="metroSoundToggle" checked><span>Sound</span></label>
-          <div class="metro-division-group" role="group" aria-label="1拍の分割数">
-            <span>Subdivision</span>
-            <button type="button" class="metro-division active" data-division="1" aria-pressed="true">1</button>
-            <button type="button" class="metro-division" data-division="2" aria-pressed="false">2</button>
-            <button type="button" class="metro-division" data-division="4" aria-pressed="false">4</button>
-          </div>
-          <label class="metro-volume">Click Vol <input type="range" id="metroVolume" min="0" max="100" value="65" aria-label="メトロノーム音量"></label>
-        </div>
-      </section>
       <div class="loop-actions">
         <button type="button" id="loopBackStart">Back A</button>
         <button type="button" id="loopReset">Reset</button>
       </div>
     </div>
 
-    <div class="controls" role="group" aria-label="再生操作">
-      <button type="button" id="playerToggle" aria-label="再生">Play</button>
-      <button type="button" id="speed2Toggle" aria-label="1倍と2倍を切り替える">x2</button>
-      <button type="button" id="skipBack10" title="←キー: 10秒戻る">-10</button>
-      <button type="button" id="skipForward10" title="→キー: 10秒進む">+10</button>
-      <button type="button" id="skipForward90">+90</button>
-    </div>
+    <section class="metro-panel" aria-label="カウントインとメトロノーム">
+      <div class="metro-top">
+        <div class="metro-bpm" role="group" aria-label="基準BPM">
+          <span>BPM</span>
+          <button type="button" id="bpmMinus" aria-label="BPMを1下げる">-</button>
+          <input type="number" id="baseBpm" min="40" max="300" step="1" value="120" inputmode="numeric" aria-label="基準BPM">
+          <button type="button" id="bpmPlus" aria-label="BPMを1上げる">+</button>
+        </div>
+        <span class="bpm-current" id="effectiveBpm">Now: 120 BPM</span>
+        <div id="metroSteps" class="metro-steps" aria-label="4拍のメトロノーム表示"></div>
+      </div>
+      <div class="metro-bottom">
+        <label class="metro-option"><input type="checkbox" id="metronomeToggle"><span>Metronome</span></label>
+        <label class="metro-option"><input type="checkbox" id="metroSoundToggle" checked><span>Sound</span></label>
+        <div class="metro-division-group" role="group" aria-label="1拍の分割数">
+          <span>Subdivision</span>
+          <button type="button" class="metro-division active" data-division="1" aria-pressed="true">1</button>
+          <button type="button" class="metro-division" data-division="2" aria-pressed="false">2</button>
+          <button type="button" class="metro-division" data-division="4" aria-pressed="false">4</button>
+        </div>
+        <label class="metro-volume">Click Vol <input type="range" id="metroVolume" min="0" max="100" value="65" aria-label="メトロノーム音量"></label>
+      </div>
+    </section>
 
     <div class="speed-control">
       <div class="speed-heading">
@@ -697,7 +699,10 @@
       document.getElementById("loopSwitch").classList.toggle("is-on", isLoopEnabled);
       document.getElementById("loopStateLabel").textContent = isLoopEnabled ? "ON" : "OFF";
     }
-    function updateSpeedButton() { document.getElementById("speed2Toggle").textContent = currentRate === SPEED_2 ? "x1" : "x2"; }
+    function updateSpeedButton() {
+      const button = document.getElementById("speed2Toggle");
+      if (button) button.textContent = currentRate === SPEED_2 ? "x1" : "x2";
+    }
 
     function changeHostMode() { const url = new URL(location.href); url.searchParams.set(HOST_PARAM, document.getElementById("hostToggle").checked ? "nocookie" : "std"); location.href = url; }
     function changeControlsMode() { const url = new URL(location.href); url.searchParams.set(CONTROLS_PARAM, document.getElementById("controlsToggle").checked ? "on" : "off"); location.href = url; }
@@ -937,8 +942,8 @@
       });
     }
 
-    document.getElementById("playerToggle").addEventListener("click", togglePlayback);
-    document.getElementById("speed2Toggle").addEventListener("click", toggleSpeed2);
+    document.getElementById("playerToggle")?.addEventListener("click", togglePlayback);
+    document.getElementById("speed2Toggle")?.addEventListener("click", toggleSpeed2);
     document.getElementById("speedDown").addEventListener("click", () => setPlaybackRate(currentRate - RATE_STEP));
     document.getElementById("speedUp").addEventListener("click", () => setPlaybackRate(currentRate + RATE_STEP));
     document.querySelectorAll(".speed-preset").forEach(button => button.addEventListener("click", () => setPlaybackRate(button.dataset.rate)));
@@ -991,7 +996,7 @@
     document.getElementById("loopEndPlus").addEventListener("click", () => nudgeLoopPoint("end", .1));
     document.getElementById("loopBackStart").addEventListener("click", seekLoopStart);
     document.getElementById("loopReset").addEventListener("click", resetLoopRange);
-    document.getElementById("skipForward90").addEventListener("click", () => seekBy(SKIP_90_SECONDS));
+    document.getElementById("skipForward90")?.addEventListener("click", () => seekBy(SKIP_90_SECONDS));
     document.getElementById("skipBack10").addEventListener("click", () => seekBy(-SKIP_10_SECONDS));
     document.getElementById("skipForward10").addEventListener("click", () => seekBy(SKIP_10_SECONDS));
     document.getElementById("invertToggle").addEventListener("click", toggleInvert);
