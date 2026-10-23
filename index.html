@@ -170,6 +170,42 @@
       .loop-options .loop-switch { min-height: 56px; min-width: 174px; }
     }
     code { background: #222; padding: 2px 6px; border-radius: 6px; }
+
+    /* Playback cursor sits above the A-B interval, but below draggable handles. */
+    .time-progress { z-index: 2; height: 5px; top: 45.5px; background: #c0e3fa; }
+    .time-playhead { display: none; position: absolute; left: 0; top: 31px; width: 2px; height: 34px; transform: translateX(-50%); background: #fff; box-shadow: 0 0 6px #fff9; z-index: 3; pointer-events: none; }
+    .time-track.has-duration .time-playhead { display: block; }
+    .time-playhead::before { content: ""; position: absolute; top: 10px; left: -5px; width: 12px; height: 12px; border-radius: 50%; box-sizing: border-box; border: 2px solid #182d38; background: #fff; }
+    .time-playhead::after { content: ""; position: absolute; top: -5px; left: -4px; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 7px solid #fff; }
+    .time-track .loop-handle { z-index: 4; }
+
+    /* Shared compact beat display for four-beat count-in and playback metronome. */
+    .metro-panel { margin-top: 8px; padding: 8px 10px; border: 1px solid #37434d; border-radius: 10px; background: #20262b; }
+    .metro-top, .metro-bottom { display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap; }
+    .metro-top { justify-content: space-between; }
+    .metro-bottom { margin-top: 8px; }
+    .metro-bpm, .metro-division-group, .metro-volume, .metro-option { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; }
+    .metro-bpm input { box-sizing: border-box; width: 60px; height: 36px; border: 1px solid #697986; border-radius: 7px; background: #273540; color: #f4f7f9; text-align: center; font: inherit; font-size: 16px; font-variant-numeric: tabular-nums; }
+    .metro-bpm button, .metro-division { min-width: 34px; min-height: 36px; padding: 5px 7px; border-radius: 7px; }
+    .metro-division.active { background: #526d7e; border-color: #a0b5c3; color: #fff; }
+    .metro-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3px; flex: 1 1 132px; max-width: 230px; min-width: 95px; }
+    .metro-step { height: 20px; border-radius: 4px; border: 1px solid #667b89; background: #293640; transition: background-color .07s, transform .07s; }
+    .metro-step.beat { border: 2px solid #829daa; }
+    .metro-step.active { background: #c0e3fa; border-color: #e3f5ff; transform: translateY(-2px); }
+    .metro-step.active.beat { background: #8bbad6; }
+    .metro-option { min-height: 36px; padding: 0 5px; cursor: pointer; white-space: nowrap; }
+    .metro-option input { width: 17px; height: 17px; accent-color: #88b7d3; }
+    .metro-division-group { gap: 4px; }
+    .metro-division-group > span { margin-right: 3px; }
+    .metro-volume { gap: 7px; white-space: nowrap; }
+    .metro-volume input { width: 90px; accent-color: #88b7d3; }
+    .metro-panel .bpm-current { font-size: 12px; color: #c3ccd2; }
+    @media (max-width: 600px) {
+      .metro-top { gap: 7px; }
+      .metro-steps { flex-basis: 108px; }
+      .metro-division-group > span { display: none; }
+      .metro-bottom { gap: 5px 8px; }
+    }
   </style>
 </head>
 <body>
@@ -181,6 +217,7 @@
       <div class="time-track" id="timeTrack" aria-label="Playback position and loop range">
         <div class="time-progress" id="timeProgress"></div>
         <div class="loop-range" id="loopRange"></div>
+        <div class="time-playhead" id="timePlayhead" aria-hidden="true"></div>
         <button type="button" class="loop-handle loop-start" id="loopStartHandle" aria-label="ループ開始Aを左右に動かす">A</button>
         <button type="button" class="loop-handle loop-end" id="loopEndHandle" aria-label="ループ終了Bを左右に動かす">B</button>
       </div>
@@ -210,9 +247,30 @@
       <div class="loop-options">
         <label class="loop-switch" id="loopSwitch"><span>Loop</span><span class="loop-switch-state" id="loopStateLabel">OFF</span><input type="checkbox" id="loopToggle" role="switch"><span class="switch-slider" aria-hidden="true"></span></label>
         <label class="countin-switch"><span>Count-in</span><input type="checkbox" id="countInToggle" checked><span class="switch-slider" aria-hidden="true"></span></label>
-        <label class="bpm-control" for="baseBpm"><span>BPM (1x)</span><input type="number" id="baseBpm" min="40" max="300" step="1" value="120" inputmode="numeric"></label>
-        <span class="bpm-current" id="effectiveBpm">Now: 120 BPM</span>
       </div>
+      <section class="metro-panel" aria-label="カウントインとメトロノーム">
+        <div class="metro-top">
+          <div class="metro-bpm" role="group" aria-label="基準BPM">
+            <span>BPM</span>
+            <button type="button" id="bpmMinus" aria-label="BPMを1下げる">-</button>
+            <input type="number" id="baseBpm" min="40" max="300" step="1" value="120" inputmode="numeric" aria-label="基準BPM">
+            <button type="button" id="bpmPlus" aria-label="BPMを1上げる">+</button>
+          </div>
+          <span class="bpm-current" id="effectiveBpm">Now: 120 BPM</span>
+          <div id="metroSteps" class="metro-steps" aria-label="4拍のメトロノーム表示"></div>
+        </div>
+        <div class="metro-bottom">
+          <label class="metro-option"><input type="checkbox" id="metronomeToggle"><span>Metronome</span></label>
+          <label class="metro-option"><input type="checkbox" id="metroSoundToggle" checked><span>Sound</span></label>
+          <div class="metro-division-group" role="group" aria-label="1拍の分割数">
+            <span>Subdivision</span>
+            <button type="button" class="metro-division active" data-division="1" aria-pressed="true">1</button>
+            <button type="button" class="metro-division" data-division="2" aria-pressed="false">2</button>
+            <button type="button" class="metro-division" data-division="4" aria-pressed="false">4</button>
+          </div>
+          <label class="metro-volume">Click Vol <input type="range" id="metroVolume" min="0" max="100" value="65" aria-label="メトロノーム音量"></label>
+        </div>
+      </section>
       <div class="loop-actions">
         <button type="button" id="loopBackStart">Back A</button>
         <button type="button" id="loopReset">Reset</button>
@@ -282,6 +340,12 @@
     const BPM_STORAGE_KEY = "z.baseBpm";
     const BPM_PARAM = "bpm";
     const COUNT_IN_STORAGE_KEY = "z.countInEnabled";
+    const METRO_DIVISION_STORAGE_KEY = "z.metroDivision";
+    const METRO_VOLUME_STORAGE_KEY = "z.metroVolume";
+    const METRO_SOUND_STORAGE_KEY = "z.metroSoundEnabled";
+    const METRO_ENABLED_STORAGE_KEY = "z.metroEnabled";
+    const METRO_LOOKAHEAD_MS = 25;
+    const METRO_AHEAD_SECONDS = .12;
     const LOOP_PARAM_START = "loopStart";
     const LOOP_PARAM_END = "loopEnd";
     const HOST_PARAM = "host";
@@ -309,6 +373,19 @@
     let countInTimeouts = [];
     let countInOscillators = [];
     let countInAudioContext = null;
+    let countInTargetTime = 0;
+    let metroMasterGain = null;
+    let metroDivision = 1;
+    let metroVolume = 65;
+    let metroSoundEnabled = true;
+    let metroEnabled = false;
+    let metroTimer = null;
+    let metroAnimationFrame = null;
+    let metroNextTime = 0;
+    let metroNextStep = 0;
+    let metroVisualQueue = [];
+    let metroOscillators = [];
+    let metroGeneration = 0;
     let waitingForLoopSeek = false;
     let initialCaptionsHandled = false;
 
@@ -342,44 +419,136 @@
       document.getElementById("countInToggle").checked = isCountInEnabled;
       document.getElementById("effectiveBpm").textContent = "Now: " + Number(effectiveBpm().toFixed(2)) + " BPM (" + formatRate(currentRate) + ")";
     }
+    function renderMetroSteps() {
+      const steps = document.getElementById("metroSteps");
+      steps.replaceChildren();
+      steps.style.gridTemplateColumns = "repeat(" + (COUNT_IN_BEATS * metroDivision) + ",minmax(0,1fr))";
+      for (let i = 0; i < COUNT_IN_BEATS * metroDivision; i++) {
+        const step = document.createElement("span");
+        step.className = "metro-step" + (i % metroDivision === 0 ? " beat" : "");
+        steps.appendChild(step);
+      }
+    }
+    function showMetroStep(index) {
+      const steps = document.getElementById("metroSteps").children;
+      for (let i = 0; i < steps.length; i++) steps[i].classList.toggle("active", i === index);
+    }
+    function clearMetroSteps() { showMetroStep(-1); }
+    function updateMetroControls() {
+      document.getElementById("metronomeToggle").checked = metroEnabled;
+      document.getElementById("metroSoundToggle").checked = metroSoundEnabled;
+      document.getElementById("metroVolume").value = String(metroVolume);
+      document.querySelectorAll(".metro-division").forEach(button => {
+        const active = Number(button.dataset.division) === metroDivision;
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-pressed", String(active));
+      });
+      renderMetroSteps();
+    }
     function saveCountInSettings() {
-      try { localStorage.setItem(BPM_STORAGE_KEY, String(baseBpm)); localStorage.setItem(COUNT_IN_STORAGE_KEY, String(isCountInEnabled)); } catch (_) {}
+      try {
+        localStorage.setItem(BPM_STORAGE_KEY, String(baseBpm));
+        localStorage.setItem(COUNT_IN_STORAGE_KEY, String(isCountInEnabled));
+        localStorage.setItem(METRO_DIVISION_STORAGE_KEY, String(metroDivision));
+        localStorage.setItem(METRO_VOLUME_STORAGE_KEY, String(metroVolume));
+        localStorage.setItem(METRO_SOUND_STORAGE_KEY, String(metroSoundEnabled));
+        localStorage.setItem(METRO_ENABLED_STORAGE_KEY, String(metroEnabled));
+      } catch (_) {}
     }
     function loadCountInSettings() {
       try {
         const savedBpm = localStorage.getItem(BPM_STORAGE_KEY);
         const savedEnabled = localStorage.getItem(COUNT_IN_STORAGE_KEY);
+        const savedDivision = Number(localStorage.getItem(METRO_DIVISION_STORAGE_KEY));
+        const savedVolume = localStorage.getItem(METRO_VOLUME_STORAGE_KEY);
+        const savedSound = localStorage.getItem(METRO_SOUND_STORAGE_KEY);
+        const savedMetro = localStorage.getItem(METRO_ENABLED_STORAGE_KEY);
         if (savedBpm !== null) baseBpm = normalizeBpm(savedBpm);
         if (savedEnabled !== null) isCountInEnabled = savedEnabled === "true";
+        if ([1, 2, 4].includes(savedDivision)) metroDivision = savedDivision;
+        if (savedVolume !== null && Number.isFinite(Number(savedVolume))) metroVolume = Math.round(Math.max(0, Math.min(100, Number(savedVolume))));
+        if (savedSound !== null) metroSoundEnabled = savedSound === "true";
+        if (savedMetro !== null) metroEnabled = savedMetro === "true";
       } catch (_) {}
-      // Explicit URL setting takes priority over this browser's saved BPM.
       const urlBpm = getNumberParam(BPM_PARAM);
       if (urlBpm !== null) baseBpm = normalizeBpm(urlBpm);
       updateBpmControl();
+      updateMetroControls();
     }
     function unlockCountInAudio() {
-      if (!isCountInEnabled) return;
+      if (!isCountInEnabled && !metroEnabled) return;
       try {
         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
         if (!AudioContextClass) return;
-        if (!countInAudioContext) countInAudioContext = new AudioContextClass();
+        if (!countInAudioContext) {
+          countInAudioContext = new AudioContextClass({ latencyHint: "interactive" });
+          metroMasterGain = countInAudioContext.createGain();
+          metroMasterGain.gain.value = metroVolume / 100;
+          metroMasterGain.connect(countInAudioContext.destination);
+        }
         if (countInAudioContext.state === "suspended") countInAudioContext.resume().catch(() => {});
       } catch (_) {}
     }
-    function scheduleCountInClick(at, accented) {
-      if (!countInAudioContext || countInAudioContext.state !== "running") return;
+    function scheduleCountInClick(at, accented, list) {
+      if (!countInAudioContext || !metroMasterGain || !metroSoundEnabled || metroVolume === 0) return;
       const oscillator = countInAudioContext.createOscillator();
       const gain = countInAudioContext.createGain();
-      oscillator.type = "sine";
-      oscillator.frequency.setValueAtTime(accented ? 1200 : 850, at);
+      oscillator.type = "square";
+      oscillator.frequency.setValueAtTime(accented ? 1500 : 750, at);
       gain.gain.setValueAtTime(.0001, at);
-      gain.gain.exponentialRampToValueAtTime(accented ? .20 : .13, at + .004);
-      gain.gain.exponentialRampToValueAtTime(.0001, at + .075);
+      gain.gain.exponentialRampToValueAtTime(accented ? .62 : .38, at + .002);
+      gain.gain.exponentialRampToValueAtTime(.0001, at + .045);
       oscillator.connect(gain);
-      gain.connect(countInAudioContext.destination);
+      gain.connect(metroMasterGain);
       oscillator.start(at);
-      oscillator.stop(at + .08);
-      countInOscillators.push(oscillator);
+      oscillator.stop(at + .05);
+      list.push({ oscillator, stopTime: at + .06 });
+    }
+    function stopScheduledClicks(list) {
+      list.forEach(({ oscillator }) => { try { oscillator.stop(); } catch (_) {} });
+      list.length = 0;
+    }
+    function stopMetronome() {
+      metroGeneration++;
+      if (metroTimer !== null) { clearTimeout(metroTimer); metroTimer = null; }
+      if (metroAnimationFrame !== null) { cancelAnimationFrame(metroAnimationFrame); metroAnimationFrame = null; }
+      stopScheduledClicks(metroOscillators);
+      metroVisualQueue = [];
+      if (!countInActive) clearMetroSteps();
+    }
+    function metroScheduler() {
+      if (!metroEnabled || countInActive || !countInAudioContext || player?.getPlayerState?.() !== YT.PlayerState.PLAYING) return;
+      while (metroNextTime < countInAudioContext.currentTime + METRO_AHEAD_SECONDS) {
+        const index = metroNextStep;
+        scheduleCountInClick(metroNextTime, index % metroDivision === 0, metroOscillators);
+        metroVisualQueue.push({ index, time: metroNextTime });
+        metroNextTime += 60 / effectiveBpm() / metroDivision;
+        metroNextStep = (metroNextStep + 1) % (COUNT_IN_BEATS * metroDivision);
+      }
+      metroOscillators = metroOscillators.filter(node => node.stopTime > countInAudioContext.currentTime);
+      metroTimer = setTimeout(metroScheduler, METRO_LOOKAHEAD_MS);
+    }
+    function drawMetroSteps() {
+      if (!metroEnabled || countInActive || !countInAudioContext) return;
+      while (metroVisualQueue.length && metroVisualQueue[0].time <= countInAudioContext.currentTime) {
+        showMetroStep(metroVisualQueue.shift().index);
+      }
+      metroAnimationFrame = requestAnimationFrame(drawMetroSteps);
+    }
+    async function startMetronome() {
+      stopMetronome();
+      if (!metroEnabled || countInActive || !isPlayerReady() || player.getPlayerState?.() !== YT.PlayerState.PLAYING || document.hidden) return;
+      unlockCountInAudio();
+      if (!countInAudioContext) return;
+      const generation = ++metroGeneration;
+      if (countInAudioContext.state === "suspended") {
+        try { await countInAudioContext.resume(); } catch (_) { return; }
+      }
+      if (generation !== metroGeneration || !metroEnabled || countInActive || player.getPlayerState?.() !== YT.PlayerState.PLAYING) return;
+      metroNextTime = countInAudioContext.currentTime + .05;
+      metroNextStep = 0;
+      metroScheduler();
+      drawMetroSteps();
     }
     function cancelCountIn(resumePlayback = false) {
       if (!countInActive) return;
@@ -387,32 +556,46 @@
       countInGeneration++;
       countInTimeouts.forEach(clearTimeout);
       countInTimeouts = [];
-      countInOscillators.forEach(oscillator => { try { oscillator.stop(); } catch (_) {} });
-      countInOscillators = [];
+      stopScheduledClicks(countInOscillators);
       const overlay = document.getElementById("countInOverlay");
       overlay.classList.remove("visible");
       overlay.textContent = "";
-      if (resumePlayback && isPlayerReady()) { waitingForLoopSeek = true; player.seekTo(loopStart, true); player.playVideo(); }
+      clearMetroSteps();
+      if (resumePlayback && isPlayerReady()) {
+        waitingForLoopSeek = isLoopEnabled;
+        player.seekTo(countInTargetTime, true);
+        player.playVideo();
+      }
+      updatePlaybackButton();
     }
-    function startLoopCountIn() {
-      if (!isPlayerReady() || !isLoopEnabled || !isCountInEnabled) return;
+    async function startCountIn(targetTime) {
+      if (!isPlayerReady() || !isCountInEnabled) return;
       cancelCountIn();
+      stopMetronome();
       countInActive = true;
+      countInTargetTime = clampTime(targetTime);
       const generation = ++countInGeneration;
-      const beatMs = 60000 / effectiveBpm();
       const overlay = document.getElementById("countInOverlay");
       overlay.textContent = "Count-in";
       overlay.classList.add("visible");
       player.pauseVideo();
-      player.seekTo(loopStart, true);
-      if (countInAudioContext && countInAudioContext.state === "running") {
-        const firstBeatAt = countInAudioContext.currentTime + .02;
-        for (let beat = 0; beat < COUNT_IN_BEATS; beat++) scheduleCountInClick(firstBeatAt + beat * beatMs / 1000, beat === 0);
+      player.seekTo(countInTargetTime, true);
+      updatePlaybackButton();
+      unlockCountInAudio();
+      if (countInAudioContext?.state === "suspended") {
+        try { await countInAudioContext.resume(); } catch (_) {}
       }
-      for (let beat = 0; beat < COUNT_IN_BEATS; beat++) {
+      if (!countInActive || generation !== countInGeneration) return;
+      const stepMs = 60000 / effectiveBpm() / metroDivision;
+      const firstDelayMs = 50;
+      const firstAt = countInAudioContext?.state === "running" ? countInAudioContext.currentTime + firstDelayMs / 1000 : null;
+      for (let step = 0; step < COUNT_IN_BEATS * metroDivision; step++) {
+        if (firstAt !== null) scheduleCountInClick(firstAt + step * stepMs / 1000, step % metroDivision === 0, countInOscillators);
         countInTimeouts.push(setTimeout(() => {
-          if (countInActive && generation === countInGeneration) overlay.textContent = (beat + 1) + " / " + COUNT_IN_BEATS;
-        }, beat * beatMs));
+          if (!countInActive || generation !== countInGeneration) return;
+          overlay.textContent = (Math.floor(step / metroDivision) + 1) + " / " + COUNT_IN_BEATS;
+          showMetroStep(step);
+        }, firstDelayMs + step * stepMs));
       }
       countInTimeouts.push(setTimeout(() => {
         if (!countInActive || generation !== countInGeneration) return;
@@ -421,17 +604,53 @@
         countInOscillators = [];
         overlay.classList.remove("visible");
         overlay.textContent = "";
-        waitingForLoopSeek = true;
-        player.seekTo(loopStart, true);
+        clearMetroSteps();
+        waitingForLoopSeek = isLoopEnabled;
+        player.seekTo(countInTargetTime, true);
         player.playVideo();
-      }, COUNT_IN_BEATS * beatMs));
+        updatePlaybackButton();
+      }, firstDelayMs + COUNT_IN_BEATS * metroDivision * stepMs));
+    }
+    function startLoopCountIn() {
+      if (isPlayerReady() && isLoopEnabled && isCountInEnabled) startCountIn(loopStart);
     }
     function changeBaseBpm() {
       baseBpm = normalizeBpm(document.getElementById("baseBpm").value);
       updateBpmControl();
       saveCountInSettings();
       updateBpmParamInUrl();
-      if (countInActive) startLoopCountIn();
+      if (countInActive) startCountIn(countInTargetTime);
+      else if (metroEnabled) startMetronome();
+    }
+    function adjustBaseBpm(delta) {
+      document.getElementById("baseBpm").value = String(baseBpm + delta);
+      changeBaseBpm();
+    }
+    function changeMetroDivision(event) {
+      const division = Number(event.currentTarget.dataset.division);
+      if (![1, 2, 4].includes(division) || division === metroDivision) return;
+      metroDivision = division;
+      updateMetroControls();
+      saveCountInSettings();
+      if (countInActive) startCountIn(countInTargetTime);
+      else if (metroEnabled) startMetronome();
+    }
+    function toggleMetronome() {
+      metroEnabled = document.getElementById("metronomeToggle").checked;
+      saveCountInSettings();
+      if (metroEnabled) startMetronome();
+      else stopMetronome();
+    }
+    function toggleMetroSound() {
+      metroSoundEnabled = document.getElementById("metroSoundToggle").checked;
+      saveCountInSettings();
+      if (countInActive) startCountIn(countInTargetTime);
+      else if (metroEnabled) startMetronome();
+    }
+    function changeMetroVolume() {
+      metroVolume = Math.round(Math.max(0, Math.min(100, Number(document.getElementById("metroVolume").value) || 0)));
+      if (metroMasterGain && countInAudioContext) metroMasterGain.gain.setTargetAtTime(metroVolume / 100, countInAudioContext.currentTime, .01);
+      saveCountInSettings();
     }
     function toggleCountIn() {
       isCountInEnabled = document.getElementById("countInToggle").checked;
@@ -556,24 +775,36 @@
         return;
       }
       document.getElementById("timeValue").textContent = formatTime(currentTime) + " / " + formatTime(videoDuration);
-      document.getElementById("timeProgress").style.width = timeToPercent(currentTime) + "%";
+      const position = timeToPercent(currentTime);
+      document.getElementById("timeProgress").style.width = position + "%";
+      document.getElementById("timePlayhead").style.left = position + "%";
+      document.getElementById("timeTrack").classList.toggle("has-duration", videoDuration > 0);
       updateLoopButton();
     }
 
-    function setPlaybackRate(rate) { if (!player?.setPlaybackRate) return; const oldRate = currentRate; currentRate = normalizeRate(rate); player.setPlaybackRate(currentRate); updateSpeedButton(); updateSpeedControl(); if (countInActive && oldRate !== currentRate) startLoopCountIn(); setMessage("Speed <code>" + formatRate(currentRate) + "</code>"); }
+    function setPlaybackRate(rate) { if (!player?.setPlaybackRate) return; const oldRate = currentRate; currentRate = normalizeRate(rate); player.setPlaybackRate(currentRate); updateSpeedButton(); updateSpeedControl(); if (oldRate !== currentRate) { if (countInActive) startCountIn(countInTargetTime); else if (metroEnabled) startMetronome(); } setMessage("Speed <code>" + formatRate(currentRate) + "</code>"); }
     function updatePlaybackButton() {
       const button = document.getElementById("playerToggle");
       if (!button || !isPlayerReady()) return;
       const playing = player.getPlayerState?.() === YT.PlayerState.PLAYING;
-      button.textContent = playing ? "Pause" : "Play";
-      button.setAttribute("aria-label", playing ? "一時停止" : "再生");
+      button.textContent = countInActive ? "Stop" : playing ? "Pause" : "Play";
+      button.setAttribute("aria-label", countInActive ? "カウントインを停止" : playing ? "一時停止" : "再生");
     }
     function togglePlayback() {
       if (!isPlayerReady()) return;
       requestWakeLock();
-      if (countInActive) { cancelCountIn(); player.playVideo(); }
-      else if (player.getPlayerState?.() === YT.PlayerState.PLAYING) player.pauseVideo();
-      else player.playVideo();
+      if (countInActive) {
+        cancelCountIn();
+        player.pauseVideo();
+      } else if (player.getPlayerState?.() === YT.PlayerState.PLAYING) {
+        player.pauseVideo();
+        stopMetronome();
+      } else if (isCountInEnabled) {
+        const currentTime = clampTime(player.getCurrentTime());
+        startCountIn(isLoopEnabled && currentTime >= loopEnd ? loopStart : currentTime);
+      } else {
+        player.playVideo();
+      }
       updatePlaybackButton();
     }
     function toggleSpeed2() { if (!isPlayerReady()) return; requestWakeLock(); if (!countInActive) player.playVideo(); setPlaybackRate(currentRate === SPEED_2 ? NORMAL_RATE : SPEED_2); }
@@ -586,10 +817,9 @@
       // Editing fields keep their ordinary arrow-key behavior.
       if (target.isContentEditable || target.closest("[contenteditable='true']")) return true;
       if (["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)) return true;
-      // A/B handles use Left/Right for their existing 0.1-second adjustments.
-      if (target.closest(".loop-handle")) return true;
-      // Space on a focused button must activate that button, not play/pause twice.
-      return key === "Space" && Boolean(target.closest("button, a, [role='button']"));
+      // Left/Right on A/B handles still adjusts their positions.
+      // Space controls playback even if a normal button currently has focus.
+      return key !== "Space" && Boolean(target.closest(".loop-handle"));
     }
 
     function handleKeyboardShortcut(event) {
@@ -687,18 +917,21 @@
         width: "100%", height: "100%", videoId, host: getYouTubeHost(),
         playerVars: { playsinline: 1, rel: 0, controls: getEmbedControlsValue(), disablekb: 1, fs: 0, iv_load_policy: 3, cc_load_policy: 0, modestbranding: 1 },
         events: {
-          onReady() { applyInitialCaptionsOff(); setPlaybackRate(NORMAL_RATE); player.setVolume?.(Number(document.getElementById("volumeRange").value)); updatePlaybackButton(); updateSpeedButton(); updateSpeedControl(); updateInvertButton(); updateFullscreenButton(); updateHostToggle(); updateControlsToggle(); updateTimeControl(); updateVideoTitle(); setInterval(updateTimeControl, 250); setMessage("Ready"); },
+          onReady() { applyInitialCaptionsOff(); setPlaybackRate(NORMAL_RATE); player.setVolume?.(Number(document.getElementById("volumeRange").value)); updatePlaybackButton(); updateSpeedButton(); updateSpeedControl(); updateInvertButton(); updateFullscreenButton(); updateHostToggle(); updateControlsToggle(); updateTimeControl(); updateVideoTitle(); setInterval(updateTimeControl, 100); setMessage("Ready"); },
           onStateChange(event) {
             if (event.data === YT.PlayerState.PLAYING) {
               if (countInActive) player.pauseVideo();
-              else requestWakeLock();
-            } else if (event.data === YT.PlayerState.ENDED && isLoopEnabled && !countInActive && !waitingForLoopSeek && loopEnd > loopStart) {
-              if (isCountInEnabled) startLoopCountIn();
-              else restartLoopImmediately();
+              else { requestWakeLock(); if (metroEnabled) startMetronome(); }
+            } else {
+              stopMetronome();
+              if (event.data === YT.PlayerState.ENDED && isLoopEnabled && !countInActive && !waitingForLoopSeek && loopEnd > loopStart) {
+                if (isCountInEnabled) startLoopCountIn();
+                else restartLoopImmediately();
+              }
             }
             updatePlaybackButton();
           },
-          onPlaybackRateChange(event) { const oldRate = currentRate; currentRate = normalizeRate(event.data); updateSpeedButton(); updateSpeedControl(); if (countInActive && oldRate !== currentRate) startLoopCountIn(); },
+          onPlaybackRateChange(event) { const oldRate = currentRate; currentRate = normalizeRate(event.data); updateSpeedButton(); updateSpeedControl(); if (oldRate !== currentRate) { if (countInActive) startCountIn(countInTargetTime); else if (metroEnabled) startMetronome(); } },
           onApiChange() { applyInitialCaptionsOff(); }
         }
       });
@@ -715,7 +948,16 @@
     document.getElementById("fullscreenToggle").addEventListener("click", toggleFullscreen);
     document.addEventListener("fullscreenchange", updateFullscreenButton);
     document.addEventListener("webkitfullscreenchange", updateFullscreenButton);
-    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") requestWakeLock(); });
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        requestWakeLock();
+        if (metroEnabled && !countInActive) startMetronome();
+      } else {
+        stopMetronome();
+        if (countInActive) { cancelCountIn(); player?.pauseVideo?.(); }
+      }
+    });
+    window.addEventListener("pagehide", () => { stopMetronome(); cancelCountIn(); });
     document.addEventListener("keydown", handleKeyboardShortcut, true);
     document.addEventListener("pointerdown", requestWakeLock, { once: true });
     document.addEventListener("pointerdown", unlockCountInAudio, { once: true });
@@ -735,6 +977,12 @@
     document.getElementById("loopToggle").addEventListener("change", toggleLoop);
     document.getElementById("countInToggle").addEventListener("change", toggleCountIn);
     document.getElementById("baseBpm").addEventListener("change", changeBaseBpm);
+    document.getElementById("bpmMinus").addEventListener("click", () => adjustBaseBpm(-1));
+    document.getElementById("bpmPlus").addEventListener("click", () => adjustBaseBpm(1));
+    document.getElementById("metronomeToggle").addEventListener("change", toggleMetronome);
+    document.getElementById("metroSoundToggle").addEventListener("change", toggleMetroSound);
+    document.getElementById("metroVolume").addEventListener("input", changeMetroVolume);
+    document.querySelectorAll(".metro-division").forEach(button => button.addEventListener("click", changeMetroDivision));
     document.getElementById("loopSetStart").addEventListener("click", setLoopStartAtCurrentTime);
     document.getElementById("loopSetEnd").addEventListener("click", setLoopEndAtCurrentTime);
     document.getElementById("loopStartMinus").addEventListener("click", () => nudgeLoopPoint("start", -.1));
